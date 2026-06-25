@@ -178,7 +178,7 @@ src = get_data_from_version("enterprise-attack", "18.0")
 ## Getting a list of versions
 
 The [collection index](/index.json) on this repository contains a full list of versions for each domain of ATT&CK.
-See our [collections document](https://github.com/center-for-threat-informed-defense/attack-workbench-frontend/blob/main/docs/collections.md#collection-indexes) for more information about the format of collection indexes.
+See our [collections document](https://github.com/mitre-attack/attack-workbench-frontend/blob/main/docs/collections.md#collection-indexes) for more information about the format of collection indexes.
 You can also find a human-readable version of that file in [index.md](/index.md).
 
 The collection index was added in the upgrade to STIX 2.1 and is not available for [the STIX 2.0 dataset](https://github.com/mitre/cti).

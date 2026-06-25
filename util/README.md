@@ -20,7 +20,7 @@ They are provided for maintainers within the ATT&CK team and to enable the ATT&C
 
 This script generates a collection index from a set of collections. Run `python3 util/generate-collection-index.py -h` for usage instructions.
 
-The [ATT&CK Workbench](https://github.com/center-for-threat-informed-defense/attack-workbench-frontend) tool can create collections to serve as input to this script.
+The [ATT&CK Workbench](https://github.com/mitre-attack/attack-workbench-frontend) tool can create collections to serve as input to this script.
 
 ## [index-to-md.py](index-to-md.py)
 
