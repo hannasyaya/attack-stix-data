@@ -9,6 +9,11 @@ Not a detection engineer.
 **Stack scope:** Cloud (IaaS/SaaS), Identity Provider, Containers, Linux/Windows servers.
 581 of 697 Enterprise techniques are in scope.
 
+**Cloud reference: Azure.** Examples use Entra ID, subscriptions, managed identities, Azure
+RBAC, Key Vault, App Service, AKS and Microsoft 365 — not AWS. Note that ATT&CK's own data is
+AWS-weighted, so the tutor translates AWS log sources to their Azure equivalents and flags when
+it is doing so.
+
 ---
 
 ## Status

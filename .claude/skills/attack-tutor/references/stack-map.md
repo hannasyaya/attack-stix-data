@@ -9,9 +9,56 @@ much more learnable.
 
 ---
 
+## Cloud reference: Azure
+
+The user works in Azure. All cloud examples use Azure and Microsoft services. ATT&CK's data is
+AWS-weighted, so translate — and say when you are translating.
+
+| ATT&CK / AWS term | Azure equivalent |
+|---|---|
+| AWS account | Subscription (billing/isolation), tenant (identity), management group |
+| IAM role / policy | Azure RBAC role assignment at a scope |
+| EC2 instance profile / instance role | Managed identity (system- or user-assigned) |
+| `AssumeRole` | Token from IMDS at `169.254.169.254`, or federated credential |
+| AWS root user | No exact match. Nearest: Global Administrator in Entra ID, Owner at subscription or management-group scope, and break-glass accounts |
+| S3 bucket | Storage account → blob container |
+| Secrets Manager | Key Vault |
+| Lambda | Azure Functions |
+| EKS | AKS |
+| ALB | Application Gateway / Front Door |
+| Security Groups | NSG, or Azure Firewall |
+| `AWS:CloudTrail` (142 analytics) | **Two separate logs**: Azure Activity Log for control-plane writes, Entra ID sign-in and audit logs for identity. This split has no AWS equivalent and is the most common translation mistake |
+| `AWS:VPCFlowLogs` | NSG flow logs / VNet flow logs |
+| `AWS:CloudWatch` | Azure Monitor, into a Log Analytics workspace |
+
+**Azure log sources that genuinely appear in ATT&CK analytics** — safe to cite as ATT&CK's own:
+`azure:signinlogs` (35), `azure:audit` (13), `azure:activity` (9), `azure:policy` (3),
+`azure:ad`, `azure:vpcflow`, `azure:vmguest`, `ApplicationLog:EntraIDPortal`,
+`Microsoft Entra ID Audit Logs`, plus the M365 family — `m365:unified` (88), `m365:exchange`,
+`m365:signinlogs`, `m365:oauth`, `m365:defender`. For AKS, `kubernetes:audit` (12) and
+`kubernetes:apiserver` (10) apply directly.
+
+Anything else Azure-specific is your translation, not ATT&CK's. Label it as such.
+
+**Two Azure-specific concerns ATT&CK covers poorly**, worth raising because they are design
+decisions the user owns:
+
+- **The Entra ID / Azure RBAC split.** Entra roles (Global Administrator) and Azure RBAC roles
+  (Owner) are different systems with different escalation paths, and a Global Administrator can
+  elevate to gain access to all subscriptions. ATT&CK's cloud model does not represent this
+  cleanly.
+- **Managed identity as the real prize.** Compromising a workload yields its managed identity
+  with no credential to steal or rotate — the token comes from the instance metadata endpoint.
+  This maps to T1078.004 Cloud Accounts, but the "no credential exists" property is what makes
+  blast-radius design the only real control.
+
+---
+
 ## Identity Provider — 48 techniques
 
-**The smallest surface and the most important one.** Entra ID, Okta, Ping, federation, OAuth.
+**The smallest surface and the most important one.** Entra ID, federation, OAuth, Conditional
+Access. (ATT&CK's analytics often name Okta as the example identity provider; the technique
+applies identically to Entra ID.)
 
 Start the user here. Identity is where application attacks now begin, and the technique count is
 small enough to genuinely learn in full.
@@ -45,7 +92,8 @@ suppliers, contractors and federated tenants, and it is inherited whole.
 
 ## IaaS — 104 techniques
 
-AWS, Azure, GCP workloads, instances, storage, roles.
+Azure subscriptions, VMs and VM Scale Sets, App Service, Storage accounts, managed identities,
+Azure RBAC.
 
 | ID | Technique | Groups |
 |---|---|---|
@@ -61,20 +109,25 @@ Highest-leverage controls: M1018 (48), M1047 Audit (29), M1026 (23), M1032 MFA (
 
 **The architect's lesson.** Two entry doors — exploit the exposed app (T1190) or use valid
 credentials (T1078) — then a lot of discovery. Discovery techniques rank high because cloud
-control planes are extremely talkative: one API call enumerates the estate. The instance role or
+control planes are extremely talkative: one Azure Resource Graph query enumerates the estate,
+and any authenticated principal can read far more of the directory than people expect. The
 managed identity attached to a workload is usually the real prize, so blast-radius design (what
-can this role reach?) does more than perimeter hardening.
+RBAC scope can this identity actually reach?) does more than perimeter hardening.
 
 T1685 Disable or Modify Tools at 41 groups is worth flagging: adversaries routinely turn off
 logging and security tooling. If your audit trail can be disabled by the identity you are
-auditing, it is not an audit trail. Design CloudTrail/Activity Log integrity as a separate
-control.
+auditing, it is not an audit trail. In Azure that means diagnostic settings and the Log
+Analytics workspace need their own RBAC boundary — an Owner on the subscription can otherwise
+delete the evidence. Note also that Azure Activity Log retention defaults to 90 days unless you
+export it.
 
 ---
 
 ## SaaS and Office Suite — 70 and 78 techniques
 
-Microsoft 365, Google Workspace, Salesforce, and the integrations wired into them.
+Microsoft 365 — Exchange Online, SharePoint, Teams — and the third-party apps wired into the
+tenant. Well served by ATT&CK's data: `m365:unified` is the third most-referenced log source in
+the whole catalogue at 88 analytics.
 
 | ID | Technique | Groups |
 |---|---|---|
@@ -88,16 +141,21 @@ Microsoft 365, Google Workspace, Salesforce, and the integrations wired into the
 
 **The architect's lesson.** This is where business-impact attacks land — T1657 Financial Theft
 appears directly, which is unusual for ATT&CK and tells you what these intrusions are actually
-for. The recurring architectural failure is OAuth application consent: a user grants a malicious
-third-party app persistent mailbox access, and it survives every password reset because it never
-used a password. If your project integrates with a SaaS tenant, who can consent to apps is a
-design decision you own.
+for. The recurring architectural failure is **OAuth application consent**: a user grants a
+malicious third-party app `Mail.Read` on their behalf, and that access survives every password
+reset and MFA prompt because it never used a password. In Entra ID this is user consent
+settings and admin consent workflow — a tenant-level design decision you own. `m365:oauth` and
+`m365:unified` carry the consent-grant events.
+
+The Azure-specific escalation worth knowing: an application registration with a
+**client secret** and Graph application permissions is a non-human identity with no MFA, no
+Conditional Access by default, and a secret that often outlives the project that created it.
 
 ---
 
 ## Containers — 48 techniques
 
-Docker, Kubernetes, orchestration.
+AKS, Azure Container Apps, Container Registry.
 
 | ID | Technique | Groups |
 |---|---|---|
@@ -113,9 +171,19 @@ Highest-leverage controls: M1018 (21), M1026 (18), M1047 Audit (15), M1038 Execu
 
 **The architect's lesson.** T1036.005 at the top is the supply-chain story: an image named to
 look legitimate. Registry provenance and admission control are architecture decisions, not
-runtime ones. After that it is the classic container chain — exploit the workload, then escape
-or pivot via the service account. The Kubernetes service account token mounted into every pod by
-default is the most commonly overlooked credential in the whole stack.
+runtime ones — in Azure that means ACR content trust plus an admission policy that refuses
+images from anywhere else. After that it is the classic container chain — exploit the workload,
+then escape or pivot via the service account. The Kubernetes service account token mounted into
+every pod by default is the most commonly overlooked credential in the whole stack.
+
+On AKS specifically, the identity story is doubled: a pod may hold both a Kubernetes service
+account token *and*, via workload identity federation, an Entra ID managed identity with Azure
+RBAC. Compromising one pod can therefore cross out of the cluster into the subscription
+entirely. Whether those two identity planes are allowed to connect is a design decision, and
+it is the one most worth challenging in an AKS review.
+
+`kubernetes:audit` and `kubernetes:apiserver` are real ATT&CK log sources and map directly to
+AKS diagnostic settings.
 
 Note the small count (48). Containers are well-covered by ATT&CK relative to their size, so this
 is a realistic slice to learn completely.

@@ -26,6 +26,13 @@ python3 .claude/scripts/attack.py logs T1190
 See `.claude/skills/attack-tutor/SKILL.md` for the full command table. For explaining any single
 technique in depth, follow the tutor's seven-part teaching contract.
 
+**Cloud reference: Azure.** The user works in Azure — use Entra ID, subscriptions, managed
+identities, Azure RBAC, Key Vault, App Service and AKS in every example and control statement,
+not AWS. ATT&CK's data is AWS-weighted (`AWS:CloudTrail` appears in 142 analytics against 9 for
+`azure:activity`), so when the script returns an AWS log source, give the Azure equivalent and
+say you are translating. The translation table and the list of Azure log sources that genuinely
+appear in ATT&CK are in `.claude/skills/attack-tutor/references/stack-map.md`.
+
 ## Step 1 — Understand the system
 
 Ask only what you cannot infer, and ask it in one batch. You need:
@@ -34,8 +41,8 @@ Ask only what you cannot infer, and ask it in one batch. You need:
 - **Platforms** — maps to ATT&CK scope: IaaS, SaaS, Office Suite, Identity Provider,
   Containers, Linux, Windows, macOS
 - **Exposure** — internet-facing, internal, partner-facing?
-- **Identity model** — who authenticates, how; what machine identities exist (service accounts,
-  CI/CD, instance roles)
+- **Identity model** — who authenticates, how; what machine identities exist (managed
+  identities, app registrations with client secrets, CI/CD service connections)
 - **Data** — what an attacker would actually want
 - **Integrations** — third parties, suppliers, federated tenants
 
@@ -75,8 +82,8 @@ Group by ATT&CK mitigation, ordered by coverage in the user's actual scope (from
 
 - The ATT&CK mitigation ID and name
 - **The concrete decision for this system** — not the generic label. "M1026 Privileged Account
-  Management" is a category; "the task role must not have `s3:*` on the data bucket" is a
-  backlog item.
+  Management" is a category; "the app's managed identity gets Storage Blob Data Reader scoped to
+  one container, not Contributor on the storage account" is a backlog item.
 - Which techniques it addresses, and the observed usage count
 - **Residual risk** — what it does not cover. This is what makes the backlog credible.
 

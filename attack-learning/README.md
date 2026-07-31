@@ -65,6 +65,12 @@ Default platform scope is cloud (IaaS/SaaS/Office Suite), Identity Provider, Con
 Linux/Windows/macOS servers — 581 of 697 Enterprise techniques. Change it by asking, or with
 `--platforms` on the script.
 
+**Cloud examples use Azure** — Entra ID, subscriptions, managed identities, Azure RBAC, Key
+Vault, App Service, AKS, Microsoft 365. ATT&CK's own analytics are AWS-weighted
+(`AWS:CloudTrail` appears 142 times against 9 for `azure:activity`), so the skills translate to
+Azure equivalents and tell you when they are translating rather than quoting ATT&CK directly.
+The translation table lives in `.claude/skills/attack-tutor/references/stack-map.md`.
+
 Data is ATT&CK Enterprise v19.1, the bundle in this repository. Mobile and ICS are present in
 the repo but the skills do not cover them; ask if you need that.
 

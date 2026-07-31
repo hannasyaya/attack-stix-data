@@ -39,6 +39,25 @@ downloads and caches from MITRE. It works from any project directory. If the scr
 Linux/Windows servers — is already the script's default scope. That is 581 of 697 techniques.
 Only pass `--platforms` when the user asks about something narrower or wider.
 
+## Cloud reference: Azure
+
+**The user works in Azure.** Every cloud example, scenario and control recommendation uses
+Azure and Microsoft services — Entra ID, subscriptions and management groups, managed
+identities, Azure RBAC, Key Vault, App Service, AKS, Storage accounts, Microsoft 365.
+
+Never illustrate with AWS or GCP unless the user asks about them specifically, or the technique
+is genuinely AWS-only.
+
+**Important honesty rule.** ATT&CK's underlying data is AWS-weighted: `AWS:CloudTrail` appears
+in 142 analytics, against 35 for `azure:signinlogs`, 13 for `azure:audit` and 9 for
+`azure:activity`. So the script will often hand you an AWS log source for a technique that
+applies equally to Azure.
+
+When that happens, give the Azure equivalent **and say you are translating** — "ATT&CK names
+CloudTrail here; the Azure equivalent is the subscription Activity Log". Never silently
+rewrite an AWS log source into an Azure one as though ATT&CK had named it, and never invent an
+Azure log source. The translation table is in `references/stack-map.md`.
+
 ## The teaching contract
 
 Every technique you explain uses this seven-part shape. It is the core of the skill. Keep each
@@ -129,23 +148,27 @@ real answer with the reasoning. Never grade with a score.
 > **Why they do it.** It is an *initial access* technique: the way in. It is attractive because
 > it needs no phishing and no insider, and your front door is reachable from anywhere.
 >
-> **On your stack.** A Spring Boot service behind an ALB with an unpatched deserialization flaw.
-> One crafted POST and the container runs the attacker's code — as your service account, holding
-> your database credentials and your instance role.
+> **On your stack.** A Spring Boot API on App Service behind Application Gateway, with an
+> unpatched deserialization flaw. One crafted POST and your app runs the attacker's code — as
+> its own **managed identity**, holding whatever Key Vault access and RBAC role assignments you
+> granted it.
 >
 > **Who does this.** 65 named groups and campaigns, including APT28, APT29 and APT41. It is one
 > of the two most common ways real intrusions begin.
 >
 > **What stops it** (design decisions, not slogans):
 > - *M1051 Update Software* — patch SLA for internet-facing components, measured in days
-> - *M1030 Network Segmentation* — the DMZ workload must not reach the database directly
-> - *M1026 Privileged Account Management* — the container's role should not be able to read the
->   whole bucket
-> - *M1050 Exploit Protection* — WAF as a delay, never as the control you rely on
+> - *M1030 Network Segmentation* — private endpoints, so the app subnet cannot reach the
+>   database over the public path
+> - *M1026 Privileged Account Management* — the managed identity should hold a scoped RBAC role
+>   on one container, not Storage Blob Data Contributor on the whole account
+> - *M1050 Exploit Protection* — Application Gateway WAF as a delay, never as the control you
+>   rely on
 >
-> **What reveals it.** Web server access logs with the request that did it, process-creation
-> events showing your app spawning a shell, and egress connections from a tier that should never
-> initiate outbound. Requiring all three from the platform is your call as the architect.
+> **What reveals it.** App Service HTTP logs and Application Gateway access logs showing the
+> request that did it, process-creation events showing your app spawning a shell, and egress
+> from a tier that should never initiate outbound. Requiring all three — and routing them to a
+> Log Analytics workspace the app's own identity cannot write to — is your call as the architect.
 >
 > **What comes next.** Exploitation is only the way in. Watch what follows: T1505.003 Web Shell
 > for persistence, then T1078 Valid Accounts once they harvest credentials from the host.
