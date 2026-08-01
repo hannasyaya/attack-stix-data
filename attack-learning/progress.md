@@ -23,14 +23,18 @@ it is doing so.
 > T1190 / T1078 (get in) → T1078.001, T1078.004 (authenticate) → T1098 (stay) →
 > T1530 (take) → T1567 (send) → T1486 (destroy)
 
-**Next: four more chains**, each with a different shape, before applying any of this to a real
+**15 techniques covered.** Chain 1 completed 2026-08-01 — seven more techniques, spine APT29:
+
+> T1199 → T1621 → T1556.007 → T1649 → T1098.005 → T1685.002 → T1114.002
+
+**Next: three more chains**, each with a different shape, before applying any of this to a real
 project. Chains are derived from real threat groups rather than narrated — pulling a named
 group's techniques and ordering them by tactic gives an evidence-backed path.
 
-1. **Identity control subversion** (spine: APT29) — attackers modifying Conditional Access and
-   federation trust rather than evading them
+1. ~~**Identity control subversion** (spine: APT29)~~ — **done 2026-08-01**. Attackers
+   corrupting federation trust and the certificate authority rather than evading controls
 2. **Business email compromise** — same identity substrate, completely different endgame
-   (a payment, not encryption)
+   (a payment, not encryption) ← **next**
 3. **Container / AKS escape** — identity inherited rather than stolen
 4. **Supply chain / CI-CD** — compromise at build time, upstream of every runtime control
 
@@ -154,6 +158,98 @@ that sequence — patching, identity scope, blast radius — because by the righ
 nothing is left, and the one control that still works depends on an identity boundary decided
 several steps earlier. This is the most useful strategic conclusion so far.
 
+### 2026-08-01 — Chain 1: identity control subversion (spine: APT29)
+
+Seven techniques, taught one per message in the full contract. Technique list derived from
+APT29's own `uses` relationships in the bundle, not from memory — a planning assumption that
+APT29 tampers with Conditional Access turned out to be **wrong** (that is Scattered Spider).
+APT29 attacks the identity infrastructure itself.
+
+**T1199 Trusted Relationship** (13 groups, TA0001 only) — entry inherited through a supplier,
+contractor or federated tenant. Single tactic, which is the tell: it is a way in, nothing more.
+
+**T1621 MFA Request Generation** (4 groups: APT29, C0027, LAPSUS$, Scattered Spider; TA0006) —
+the user approves a prompt they did not initiate. MFA does not fail here, it is *granted*.
+M1017/M1032/M1036. Signal: `azure:signinlogs` — repeated MFA challenges without a successful
+primary login. The design answer is number matching, not more prompts.
+
+**T1556.007 Hybrid Identity** (1 group) — **three tactics at once** (persistence,
+credential-access, defence-impairment), which is the signature of a technique that corrupts a
+trust foundation rather than defeating a control. APT29 edited the AD FS
+`Microsoft.IdentityServer.Servicehost.exe.config` to load their own DLL into the authentication
+process, gaining access to *"any service federated with AD FS"*. Only 3 mitigations. **The
+Entra Connect / AD FS server is more privileged than everything it protects**, and is usually
+administered as an ordinary Windows server — that is the gap.
+
+**T1649 Steal or Forge Authentication Certificates** (1 group, TA0006) — APT29 abused
+misconfigured **AD CS certificate templates** to impersonate admin users and mint *additional*
+certificates: a credential factory, not a one-off theft. Certificates skip MFA, survive password
+resets and last for years. Azure-native form: **a second certificate added to an app
+registration** — rotating the original evicts nobody. M1015 is the control that would have
+stopped it. Requires an *inventory* of expected credentials, or the "certificate added" alert is
+unactionable.
+
+**T1098.005 Device Registration** (3 groups: APT29, C0027, SolarWinds) — persistence *and*
+privilege escalation. **One mitigation, M1032**, and it means *gate registration itself with
+MFA*. APT29 enrolled a device to a **dormant account** after guessing its password, because
+first-device self-enrolment is authenticated by the very factor it is meant to protect. Rule
+worth keeping: **every account must be enrolled or disabled — there is no valid third state.**
+`azure:audit` "Add device" is one of the highest-signal alerts available.
+
+**T1685.002 Disable or Modify Cloud Log** (1 group, TA0112 Defence Impairment) — **one
+mitigation, M1018**: there is no technical control, only a permissions decision. APT29 disabled
+**Purview Audit on targeted accounts** *prior to* stealing mail — per-account, so the tenant
+still looks audited and the compliance report still passes. Principle: **if the identity being
+audited can disable the audit, there is no audit.** Same structure as the T1486 backup finding.
+Missing control most places: **alerting on log-source silence**, since absence of events is
+itself the detection.
+
+**T1114.002 Remote Email Collection** (16 groups — highest in the chain, TA0009) — the
+objective. APT29 used **EWS API** requests and the built-in mailbox-export feature
+(`New-MailboxExportRequest`) against *"executives and IT staff"*. As with T1530, **the
+application is not in the path** — Graph and EWS answer directly. Highest-consequence tenant
+permission: an app registration with `Mail.Read` application permission reads every mailbox,
+no user, no MFA, no Conditional Access. M1060 Out-of-Band Communications is the unusual
+mitigation: do not run incident response inside the compromised tenant. Detection requirement:
+**`MailItemsAccessed` enabled and retained** — which is exactly the log APT29 turned off.
+
+#### What made this chain different
+
+The first chain went *around* controls. This one went *underneath* them. APT29 never defeated
+MFA or bypassed Conditional Access — they corrupted the systems that **issue the verdicts**:
+the authentication process, the certificate authority, the device registry, the audit log. Every
+control kept working correctly and kept returning "allow", because the inputs had changed.
+
+**A control is only as trustworthy as the system that feeds it.** "Is MFA enforced?" is the
+wrong question if nobody asks who can modify the authentication process, issue certificates,
+register devices, or turn off the audit log. Those four questions are on no compliance checklist
+and this chain turns on all four.
+
+**Earliest break: M1026 Privileged Account Management applied to identity infrastructure as its
+own admin tier** — separate credentials, separate admin workstations, just-in-time access.
+Technique 3 is where the chain turns; everything after it is downstream.
+
+**Cheapest single control:** alert on changes to federation trust, certificate credentials,
+device registration, and audit configuration. Four rare event types, near-zero false positives,
+each firing at a different step.
+
+#### Two observations worth keeping
+
+- **Privilege escalation was never a discrete step.** It was a *property* of techniques 3–5 —
+  T1649 says explicitly *"to impersonate admin users"*, and T1556.007 and T1098.005 both carry
+  escalation tactics. In on-prem thinking escalation is a moment you can point at; in cloud
+  identity attacks it is not separable from the technique. Reviewing a design for "the privilege
+  escalation control" will not find the gap.
+- **Usage counts are not priorities.** The two pivotal techniques show **1 group each**; the
+  endpoints show 13 and 16. Ranking work by that column would have skipped exactly the steps
+  that made the intrusion possible. ATT&CK counts public reports; it does not rank risk.
+
+#### Format change from here
+
+Every technique from now on opens with **ATT&CK's exact definition, quoted verbatim**, followed
+by an "In plain language" rewrite. The quote is what gets cited in a design document; the
+rewrite is what teaches. Encoded in the tutor's teaching contract.
+
 ## Open questions
 
 - **T1098.006 Additional Container Cluster Roles sits at 0 groups.** AKS RoleBindings are exactly
@@ -165,3 +261,8 @@ several steps earlier. This is the most useful strategic conclusion so far.
   only lever. Treat as a framework gap.
 - **T1190 Exploit Public-Facing Application** — referenced repeatedly as the other entry door but
   not yet taught properly. Worth covering.
+- **T1528 Steal Application Access Token — still owed.** It is in APT29's real technique set and
+  was deliberately left out of chain 1 to keep the path to seven techniques. OAuth token theft
+  against Microsoft 365 is directly relevant to the stack; teach it before or during chain 2.
+- **T1098.002 Additional Email Delegate Permissions** — surfaced twice now (APT29's set, and as
+  a route to mailbox access in T1114.002). It is the opening move of chain 2.

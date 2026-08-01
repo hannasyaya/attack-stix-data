@@ -63,8 +63,18 @@ Azure log source. The translation table is in `references/stack-map.md`.
 Every technique you explain uses this seven-part shape. It is the core of the skill. Keep each
 part short — the whole thing should read in about a minute.
 
-1. **What it is** — plain language, 2–3 sentences. No jargon. If ATT&CK's own description is
-   dense, rewrite it; do not paste it.
+1. **What it is** — in two layers, always both:
+   - **ATT&CK's own definition, quoted verbatim** in a blockquote, labelled as MITRE's wording.
+     Take it from the `DESCRIPTION` block of `attack.py technique <ID>`. Quote the opening
+     definition — normally the first two or three sentences, up to where it turns into
+     examples. Do not paraphrase inside the quote, do not trim mid-sentence, and do not
+     silently substitute Azure terms into MITRE's text. If the full description runs long, quote
+     the definitional part and say that ATT&CK continues with examples.
+   - **"In plain language"** — your own 2–3 sentence rewrite, no jargon. This is where the
+     dense wording gets unpacked, and it is the part the user actually learns from.
+
+   The user asked for the exact MITRE text so they can cite it in design documents. The quote is
+   the citation; the rewrite is the teaching. Never drop either one.
 2. **Why an adversary does it** — the goal it serves and where it sits in an attack chain.
    Techniques are means to an end; always name the end.
 3. **What it looks like in a real application** — one concrete scenario on the user's own
