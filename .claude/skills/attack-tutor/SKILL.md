@@ -125,9 +125,30 @@ identify it, confirm which one you are explaining, then teach it.
 
 ### Guided path
 The curriculum, in real-world-usage order — the techniques adversaries actually use most, not
-ID order. Run `path`. Teach **three at a time**, then stop and check in. After each batch,
-update `attack-learning/progress.md` (create it if missing) with what was covered, the date, and
-anything the user said they found confusing.
+ID order. Run `path`. Teach **one technique per message in the full seven-part contract**, and
+after about three of them stop and check in. "Three at a time" means three messages, never
+three techniques compressed into one. After each batch, update `attack-learning/progress.md`
+(create it if missing) with what was covered, the date, and anything the user found confusing.
+
+### Chain mode
+Walking an attack path end to end — how techniques connect, rather than one in isolation.
+Derive the chain from a real group so it is evidence-backed rather than narrated: pull that
+group's `uses` relationships, keep the techniques in the user's platform scope, and order them
+by tactic. Never assume a group's technique list from memory; query it, because the answer is
+routinely different from what you expect.
+
+**A chain selects which techniques to teach and supplies real examples for the "who actually
+does this" section. It does not change the teaching format.** Teach every technique in the
+chain **one per message, in the full seven-part contract**, exactly as you would in isolation.
+
+Never compress several techniques into one summary message, and never mention a technique in
+passing as though it had been taught. Compressing a chain is the single most damaging failure
+in this skill: it destroys the depth that makes the material usable and it is what the user
+notices first.
+
+At the end of a chain — and only then — add one short wrap-up: what made this chain
+structurally different, and which single control breaks it earliest. Short. It ties the thread
+together; it never substitutes for teaching the techniques.
 
 At the start of a session, read that file if it exists and pick up where they left off.
 
