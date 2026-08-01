@@ -106,6 +106,7 @@ class Attack:
         self.detected_by = defaultdict(list)  # technique id -> [detection strategy]
         self.subs_of = defaultdict(list)  # parent id -> [sub-technique]
         self.parent_of = {}  # sub id -> parent
+        self.procedures = defaultdict(list)  # actor id -> [(technique, description)]
 
         for r in rels:
             if not live(r):
@@ -120,6 +121,9 @@ class Attack:
             elif kind == "uses" and dst["type"] == "attack-pattern":
                 if src["type"] in ("intrusion-set", "campaign"):
                     self.used_by[dst["id"]].append(src)
+                    # Keep the procedure text: this is the evidence layer, and the
+                    # citations in it are what let a chain be pinned to one report.
+                    self.procedures[src["id"]].append((dst, r.get("description") or ""))
             elif kind == "detects" and dst["type"] == "attack-pattern":
                 self.detected_by[dst["id"]].append(src)
             elif kind == "subtechnique-of":
@@ -140,6 +144,36 @@ class Attack:
             return o
         matches = [t for t in self.techniques if t["name"].lower() == ident.lower()]
         return matches[0] if matches else None
+
+    def tactic_order(self):
+        """Tactic shortnames in kill-chain order.
+
+        Tactic IDs do not sort into this order — reconnaissance is TA0043 but comes
+        first — so take the sequence from the matrix object, which defines it.
+        """
+        for o in self.by_id.values():
+            if o.get("type") == "x-mitre-matrix" and live(o):
+                names = [self.by_id[r]["x_mitre_shortname"]
+                         for r in o.get("tactic_refs", []) if r in self.by_id]
+                if names:
+                    return names
+        return [t["x_mitre_shortname"] for t in self.tactics]
+
+    def actor(self, ident: str):
+        """A group or campaign, by ATT&CK ID, name or alias."""
+        o = self.by_eid.get(ident.upper())
+        if o and o["type"] in ("intrusion-set", "campaign"):
+            return o
+        want = ident.lower()
+        pool = [g for g in self.groups if live(g)]
+        for g in pool:
+            if g["name"].lower() == want:
+                return g
+        for g in pool:
+            if want in [x.lower() for x in g.get("aliases", [])]:
+                return g
+        matches = [g for g in pool if want in g["name"].lower()]
+        return matches[0] if len(matches) == 1 else None
 
     def usage(self, tech) -> int:
         """How many distinct named groups/campaigns are recorded using this."""
@@ -404,6 +438,67 @@ def cmd_scope(a: Attack, args):
         print(f"  {eid(m):7} {m['name'][:44]:44} {n:3} techniques")
 
 
+def cmd_chain(a: Attack, args):
+    """Derive an attack path from one actor's own procedures, ordered by tactic.
+
+    A group object aggregates years of reporting across unrelated victims, so walking
+    one end to end invents a composite attacker. --citation filters to a single source
+    report, which is the closest ATT&CK gets to one real intrusion.
+    """
+    actor = a.actor(args.name)
+    if not actor:
+        sys.exit(f"No group or campaign matching {args.name!r}. Try: attack.py chain 'APT29'")
+
+    order = a.tactic_order()
+    rank = {name: i for i, name in enumerate(order)}
+    want = set(args.platforms)
+
+    rows, skipped_platform, skipped_citation = [], 0, 0
+    for tech, desc in a.procedures.get(actor["id"], []):
+        if args.citation and args.citation.lower() not in desc.lower():
+            skipped_citation += 1
+            continue
+        plats = set(tech.get("x_mitre_platforms", []))
+        # PRE techniques carry no operational platform; they are the pre-compromise
+        # phase and must survive platform scoping or every chain starts mid-attack.
+        if plats and "PRE" not in plats and not (want & plats):
+            skipped_platform += 1
+            continue
+        phases = tactics_of(tech)
+        rows.append((min([rank.get(p, 99) for p in phases] or [99]), tech, desc, phases))
+
+    kind = "campaign" if actor["type"] == "campaign" else "group"
+    print(f"{eid(actor) or '-'}  {actor['name']}  ({kind})")
+    if args.citation:
+        print(f"Anchored to  source matching {args.citation!r}")
+    print(f"Chain        {len(rows)} techniques"
+          + (f"  ({skipped_citation} from other reports)" if skipped_citation else "")
+          + (f"  ({skipped_platform} out of platform scope)" if skipped_platform else ""))
+
+    counts = Counter()
+    for _, _, _, phases in rows:
+        for p in phases:
+            counts[p] += 1
+    print("\nSHAPE (techniques per tactic — read this before picking what to teach)")
+    for name in order:
+        if counts.get(name):
+            print(f"  {name:24} {counts[name]:3}")
+    absent = [n for n in order if not counts.get(n)]
+    if absent:
+        print(f"  absent: {', '.join(absent)}")
+
+    print("\nPATH")
+    current = None
+    for key, tech, desc, phases in sorted(rows, key=lambda x: (x[0], eid(x[1]) or "")):
+        label = order[key] if key < len(order) else "?"
+        if label != current:
+            print(f"\n-- {label.upper()}")
+            current = label
+        print(f"  {eid(tech):11} {tech['name'][:42]:44} {a.usage(tech):3} groups")
+        if args.procedures and desc:
+            print(wrap(clean(desc, 320), "       "))
+
+
 def cmd_where(a: Attack, args):
     print(a.path)
 
@@ -452,6 +547,15 @@ def main():
     s = add("logs", "detection strategies and log sources")
     s.add_argument("id")
     s.set_defaults(fn=cmd_logs)
+
+    s = add("chain", "derive an attack path from one actor's procedures, ordered by tactic")
+    s.add_argument("name", help="group or campaign: ID, name or alias (e.g. G1017, 'Volt Typhoon')")
+    s.add_argument("--citation", metavar="TEXT",
+                   help="keep only procedures citing this source, e.g. 'AA24-038A'. "
+                        "Anchors the chain to one report instead of years of aggregated reporting")
+    s.add_argument("--procedures", action="store_true",
+                   help="print what the actor actually did for each technique")
+    s.set_defaults(fn=cmd_chain)
 
     s = add("scope", "what your platform scope covers")
     s.set_defaults(fn=cmd_scope)

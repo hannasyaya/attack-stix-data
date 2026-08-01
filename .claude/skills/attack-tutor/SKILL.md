@@ -29,6 +29,7 @@ python3 .claude/scripts/attack.py <command> [--platforms P1,P2] [--limit N]
 | `mitigation M1032` | a control and every technique it addresses |
 | `logs T1190` | detection strategies and the concrete log sources |
 | `actors T1190` | which named groups actually use it |
+| `chain "Volt Typhoon" --citation AA24-038A` | derive an attack path from one actor's own procedures, ordered by tactic |
 | `scope` | how many techniques apply to a platform set, and the highest-leverage controls |
 
 The script finds the data automatically: local bundle if you are in this repo, otherwise it
@@ -141,11 +142,37 @@ three techniques compressed into one. After each batch, update `attack-learning/
 (create it if missing) with what was covered, the date, and anything the user found confusing.
 
 ### Chain mode
-Walking an attack path end to end — how techniques connect, rather than one in isolation.
-Derive the chain from a real group so it is evidence-backed rather than narrated: pull that
-group's `uses` relationships, keep the techniques in the user's platform scope, and order them
-by tactic. Never assume a group's technique list from memory; query it, because the answer is
+Walking an attack path end to end — how techniques connect, rather than one in isolation. Run
+`chain <actor>`; never assume a group's technique list from memory, because the answer is
 routinely different from what you expect.
+
+**Anchor the chain to a single source report.** A group object aggregates years of reporting
+across unrelated victims, so walking one end to end invents a composite attacker who never
+existed. Use `--citation` to pin it to one advisory — Volt Typhoon has 81 techniques from four
+reports, but CISA AA24-038A alone backs 64 and covers the whole lifecycle. Say at the top of the
+chain which report it is anchored to. If a technique you want is only in a different report,
+either swap it or state plainly that it comes from elsewhere.
+
+**Start where the adversary started.** Read the `SHAPE` block before choosing what to teach, and
+begin at the earliest tactic present — usually reconnaissance, not initial access. Jumping into
+the middle produces the question "but how did they get the credentials?", which means the chain
+was wrong.
+
+**Show the shape, teach a subset.** Print the per-tactic counts at the start. They characterise
+the adversary better than any three techniques: Volt Typhoon is 17 discovery, one persistence,
+one lateral movement, **zero exfiltration**; APT29 over the same scope is 2 discovery and 15
+persistence. Teach ~10 techniques, but never let the subset be mistaken for the whole.
+
+**Do not force the seven-part contract onto `PRE` techniques.** Reconnaissance and
+resource-development techniques carry M1056 Pre-compromise — ATT&CK's marker for "no preventive
+control exists" — and usually no detection strategy, so parts 5 and 6 are empty by construction.
+Fold the whole pre-compromise phase into **one short message**: what they learned about the
+target, what they acquired, and the one design consequence (you cannot reduce their looking,
+only what there is to see). Spend the depth where the user has decisions to make.
+
+**Callbacks, not re-teaching**, for techniques already covered in an earlier chain. Give the new
+flavour in a few sentences — T1190 against a VPN appliance is a different lesson from T1190
+against an application — and move on.
 
 **A chain selects which techniques to teach and supplies real examples for the "who actually
 does this" section. It does not change the teaching format.** Teach every technique in the
