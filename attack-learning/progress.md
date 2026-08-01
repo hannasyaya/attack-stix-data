@@ -18,10 +18,23 @@ it is doing so.
 
 ## Status
 
-**4 techniques covered** — a complete identity attack chain, taught 2026-07-31.
-Working through the identity block. Next candidates: T1098.001 Additional Cloud Credentials,
-M1026 Privileged Account Management as a control deep-dive, or T1114.002 Remote Email Collection
-to follow the chain onward.
+**8 techniques covered** — one complete intrusion chain, end to end, taught 2026-07-31:
+
+> T1190 / T1078 (get in) → T1078.001, T1078.004 (authenticate) → T1098 (stay) →
+> T1530 (take) → T1567 (send) → T1486 (destroy)
+
+**Next: four more chains**, each with a different shape, before applying any of this to a real
+project. Chains are derived from real threat groups rather than narrated — pulling a named
+group's techniques and ordering them by tactic gives an evidence-backed path.
+
+1. **Identity control subversion** (spine: APT29) — attackers modifying Conditional Access and
+   federation trust rather than evading them
+2. **Business email compromise** — same identity substrate, completely different endgame
+   (a payment, not encryption)
+3. **Container / AKS escape** — identity inherited rather than stolen
+4. **Supply chain / CI-CD** — compromise at build time, upstream of every runtime control
+
+Then a real Azure design with the `attack-threat-model` skill.
 
 ## Suggested route
 
@@ -89,6 +102,57 @@ detection-and-response requirement, and saying so is more honest than claiming a
 tenant — `Microsoft.Authorization/roleAssignments/write` in the Activity Log, plus Entra audit
 events for *Add service principal credentials*, *Add member to role*, *Add registered device*.
 Export beyond the 90-day default.
+
+### 2026-07-31 (later) — completing the chain
+
+Four more techniques, chosen to close the loop rather than deepen identity: both entry doors,
+then what the attacker came for.
+
+**T1190 Exploit Public-Facing Application** (65 groups — second-highest in the catalogue) —
+crafted input to something exposed, giving code execution. Single tactic: initial access. The
+key link: your workload runs with a managed identity, so the attacker's first move is to ask
+the instance metadata endpoint (`169.254.169.254`) for a token. ATT&CK's own container analytic
+names that endpoint as an objective. **So T1190 is how attackers arrive at T1078.004** — they
+inherit a credential rather than stealing one. Of the 8 mitigations only M1051 Update Software
+actually prevents it; the rest limit blast radius. Cheap high-signal alert: an application
+container spawning a shell, which it should never do.
+
+**T1530 Data from Cloud Storage** (7 groups) — the structural point, and the most important one
+for an application architect: ATT&CK notes there is often *no application* mediating access to
+object storage; data is retrieved directly through the cloud API. **Your app is not in the
+path**, so app-layer authorisation, rate limiting and audit logging are bypassed rather than
+defeated. Data protection has to live at the storage layer. Two Azure specifics: blob
+**data-plane logging is off by default** (Activity Log covers the control plane only), and
+"encrypted at rest" is worth nothing here because the service decrypts transparently for any
+authorised caller. Same actor roster as the persistence techniques — Scattered Spider,
+Storm-0501, HAFNIUM — which is what they were persisting *for*.
+
+**T1567 Exfiltration Over Web Service** (parent 8 groups, but T1567.002 shows 28) — upload to a
+legitimate service because the traffic blends in, **the firewall already permits it**, and TLS
+hides the contents. Only 2 mitigations, which is ATT&CK saying this cannot be reliably
+prevented. Default-deny egress with an FQDN allowlist is the one control that would have
+stopped it, and it is usually missing because it is operationally painful. Detection signal is
+the outbound-to-inbound data ratio inverting. Reading note: when sub-techniques are heavily
+used, read their counts, not the parent's.
+
+**T1486 Data Encrypted for Impact** (22 groups — highest in impact) — the ransomware endgame.
+Only 2 mitigations, and M1053 Data Backup only counts **if the compromised identity cannot
+reach the backup**. By this stage the attacker holds Global Administrator or subscription
+Owner, so if that identity can purge the vault, the backup is inside the blast radius rather
+than outside it. This is why T1490 Inhibit System Recovery exists as a companion — they delete
+recovery options first, then encrypt. Practical consequence: **recovery-inhibition alerts fire
+early enough to act on; encryption alerts do not.** Also note the two variants that skip the
+endpoint entirely — encrypting hypervisor datastores, and control-plane abuse of storage keys.
+
+### The cross-cutting finding
+
+Counting preventive mitigations along the chain: T1190 has 8, T1078 has 8, T1098 has 7 (and
+weak), T1530 has 6, T1567 has 2, T1486 has 2.
+
+**Preventive controls collapse as the attacker advances.** Design effort belongs at the left of
+that sequence — patching, identity scope, blast radius — because by the right-hand end almost
+nothing is left, and the one control that still works depends on an identity boundary decided
+several steps earlier. This is the most useful strategic conclusion so far.
 
 ## Open questions
 

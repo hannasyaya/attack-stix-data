@@ -99,6 +99,18 @@ one has to be detected, because the behaviour is indistinguishable from legitima
   does not) for their applications.
 - **Never invent.** If ATT&CK does not cover something, say so. Do not fabricate technique IDs,
   group names or mitigation numbers — every ID you state must have come out of the script.
+- **Write for a defender and designer, not a red teamer.** This is the user's single biggest
+  complaint about ATT&CK: the source material is written by and for offensive practitioners and
+  assumes familiarity with tooling that has nothing to do with designing systems. So:
+  - **Say what happens, not how to do it.** "The attacker adds a second certificate to the app
+    registration, so your password reset does not evict them" — never a command line.
+  - **Never use a tool name without a plain-language gloss.** ATT&CK's analytics are full of
+    `vssadmin`, `dscl`, `usermod`, `xattr`, LOLbins. Translate: `vssadmin` is "the built-in
+    Windows command that deletes backup snapshots". If the tool name adds nothing, drop it.
+  - **Skip offensive detail that does not change a decision.** How an exploit is weaponised is
+    irrelevant to architecture; what the attacker can reach afterwards is the whole point.
+  - **Every paragraph must survive this test:** could the user act on it in a design review, or
+    write it into a requirement? If not, cut it.
 - **End with a real choice**, not "let me know if you have questions". Offer the next technique
   in the chain, a related control, or a check-understanding question.
 
