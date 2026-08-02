@@ -87,9 +87,23 @@ part short — the whole thing should read in about a minute.
    the user could write into a design document**. "M1032 Multi-factor Authentication" is the
    label; "require phishing-resistant MFA on the admin console and on the CI/CD identity, not
    just on user login" is the lesson.
-6. **What reveals it** — the log sources from `logs`, framed as *what the application must emit*.
-   The user is not writing detections; they are deciding what their system logs, which is an
-   architecture decision they own.
+6. **What reveals it** — **answer four questions, do not list log sources.** The user told us
+   plainly they skip this section when it reads as incident response, and they were right to:
+   EventCode numbers, analytic logic and correlation rules are the detection team's work and the
+   user cannot act on them. Name the one or two log sources so they know what to ask for, then
+   spend the section on the decisions that are theirs and are irreversible later:
+   - **Can this event be produced at all?** Licence tier, default-off settings, agent required.
+     `MailItemsAccessed`, Azure blob data-plane logging and Windows process-creation auditing are
+     all off or unavailable by default — build-time decisions with a cost.
+   - **Is it retained long enough for this adversary's dwell time?** Entra ID audit and Azure
+     Activity Log default to 90 days; Volt Typhoon operated for years. You cannot buy last
+     year's logs.
+   - **Can the party being audited disable the audit?** Pure RBAC boundary question (T1685.002).
+   - **Who can read it?** The telemetry platform is a map of the organisation (T1654), so read
+     access is a confidentiality decision like any other data store.
+
+   The line to hold: the user owns whether the evidence **exists, survives and is trustworthy**;
+   the detection team owns what is done with it. Never drift across it.
 7. **What comes next** — the parent or sub-techniques, and what an adversary typically chains
    to next. Teach the graph, not the node.
 
