@@ -2,9 +2,11 @@
 
 The tutor reads this at the start of a session and updates it as you go. You can edit it freely.
 
-**Role context:** security architect designing security solutions and controls for application
-projects. Learning ATT&CK to justify controls, specify telemetry, and pressure-test designs.
-Not a detection engineer.
+**Role context:** security architect working in **application security** — designing security
+solutions and controls into application projects. Learning ATT&CK to justify controls, specify
+telemetry, and pressure-test designs. Not a detection engineer, and **not responsible for
+platform or infrastructure security** — domain controllers, AD FS/AD CS, Exchange, VPN and
+network appliances and endpoint tradecraft are other teams' remit and are out of scope.
 
 **Stack scope:** Cloud (IaaS/SaaS), Identity Provider, Containers, Linux/Windows servers.
 581 of 697 Enterprise techniques are in scope.
@@ -249,6 +251,88 @@ each firing at a different step.
 Every technique from now on opens with **ATT&CK's exact definition, quoted verbatim**, followed
 by an "In plain language" rewrite. The quote is what gets cited in a design document; the
 rewrite is what teaches. Encoded in the tutor's teaching contract.
+
+### 2026-08-02 — scope correction, and what actually transfers to AppSec
+
+**The problem.** Chains 1 and 2 drifted into platform and infrastructure security. Chain 1 ended
+in AD FS, AD CS, Purview and Exchange mailboxes; chain 2 ran through VPN appliances, domain
+controllers, NTDS and ESXi. None of that is an application architect's remit. Scope from here:
+
+- **In:** the application and its exposed surface; its identity (managed identity, app
+  registration, service principal, workload identity); its secrets; its data stores and whether
+  the app mediates access to them; its container and orchestrator; its build pipeline and
+  dependencies; its OAuth and token surface; its egress.
+- **Out:** domain controllers and AD internals, AD FS/AD CS, Exchange and mailbox techniques,
+  VPN and network appliances, endpoint tradecraft, host forensics.
+
+**Chain 2 abandoned at technique 9.** T1070.004 File Deletion is host forensics. Chain 2's
+transferable lessons are already taught and recorded below.
+
+#### The seven findings from chains 1–2 that do transfer
+
+1. **T1190 → managed identity is the core application chain.** Exploit the workload, then ask
+   the instance metadata endpoint (`169.254.169.254`) for a token. The attacker *inherits* a
+   credential rather than stealing one, so there is nothing to rotate — RBAC scope is the only
+   lever. (Chain 0.)
+2. **Your application is not in the path to its own data.** Object storage answers the cloud API
+   directly, so app-layer authorisation, rate limiting and audit logging are bypassed rather
+   than defeated. Data protection has to live at the storage layer. (T1530.)
+3. **Credential *addition* is the universal cloud persistence mechanic.** A second client secret
+   or certificate on an existing app registration; a registered device; a new role assignment.
+   All survive password resets. The recurring alert set — credential added, role assigned,
+   device registered — came up in every chain. (T1098.x, T1649, T1098.005.)
+4. **A control is only as trustworthy as the system that feeds it.** APT29 never defeated MFA or
+   Conditional Access; they corrupted the systems issuing the verdicts. Applied to applications:
+   ask who can modify the app registration, its credentials, its permissions and its consent
+   grants. (Chain 1 wrap-up.)
+5. **Preventive controls collapse as the attacker advances** — 8 mitigations at the front door,
+   2 at the end. Design effort belongs at the left of the chain.
+6. **Living off the land means "no malware" is not a defence.** Six consecutive Volt Typhoon
+   steps used built-in tooling. For applications the equivalent is legitimate SDK and CLI calls
+   against your own control plane — nothing for an endpoint agent to catch. (Chain 2.)
+7. **On-prem and cloud have asymmetric policy.** Conditional Access evaluates at Entra ID token
+   issuance; Kerberos/NTLM consult nothing. GPO is configuration management, not an
+   authentication decision point, and it only governs machines you own. A synchronised identity
+   therefore has two authentication paths of very different strength, and the attacker picks.
+   Never write "protected by Conditional Access" without saying *on which path*.
+
+#### Telemetry, reframed
+
+The "what reveals it" sections were being skipped because they read as incident response. They
+had drifted into EventCodes and correlation logic, which belong to the detection team. The four
+questions that are genuinely design-time and irreversible afterwards:
+
+1. **Can the event be produced at all?** `MailItemsAccessed` needs a licence tier; Azure blob
+   data-plane logging and Windows process-creation auditing are off by default.
+2. **Is retention longer than the adversary's dwell time?** Entra audit and Azure Activity Log
+   default to 90 days; Volt Typhoon operated for years. You cannot buy last year's logs.
+3. **Can the audited party disable the audit?** An RBAC boundary question (T1685.002).
+4. **Who can read it?** The telemetry platform is a map of the organisation (T1654).
+
+The line: the architect owns whether the evidence **exists, survives and is trustworthy**; the
+detection team owns what is done with it.
+
+#### On adversary emulation
+
+Asked whether micro-emulation would help. Conclusion: not as a practice — it answers "does the
+detection fire?", which is the detection team's question and creates findings the architect
+cannot fix. Do the **telemetry inventory** instead (query the workspace for whether each log
+actually exists), then take a chain to the detection team as a **tabletop**. Keep atomic tests
+in reserve for the two or three requirements where "I think we'd see it" is not good enough.
+Any test needs written authorisation and a lab — `ntdsutil` on a DC is indistinguishable from
+the real thing.
+
+#### Next: application-layer chains only
+
+Ranked by application-layer technique coverage in the data:
+
+| Actor | Hits | Shape |
+|---|---|---|
+| **TeamTNT** | 10 | Containers: malicious image, orchestrator API, escape to host, credentials in files |
+| **Storm-0501** | 8 | **Cloud application → storage**, procedures named by Azure API call |
+| **SolarWinds Compromise** | 6 | **CI/CD**: build compromise, code repositories, cloud identity |
+
+Chain 3 is Storm-0501, starting 2026-08-02.
 
 ## Open questions
 

@@ -40,6 +40,31 @@ downloads and caches from MITRE. It works from any project directory. If the scr
 Linux/Windows servers — is already the script's default scope. That is 581 of 697 techniques.
 Only pass `--platforms` when the user asks about something narrower or wider.
 
+## The user does application security
+
+They design security into **application projects**. Platform and infrastructure security belongs
+to other teams, and material from that world is not useful to them — they said so directly after
+a chain ended in Exchange mailboxes.
+
+**In scope:** the application and its exposed surface; its identity (managed identity, app
+registration, service principal, workload identity); its secrets and how it gets them; its data
+stores and whether the app mediates access to them; its container and orchestrator; its build
+pipeline and dependencies; its OAuth and token surface; its egress.
+
+**Out of scope unless asked:** domain controllers and Active Directory internals, AD FS and
+AD CS, Exchange and mailbox techniques, VPN and network appliances, endpoint and workstation
+tradecraft, host forensics and anti-forensics.
+
+Platform scope is not the same as this. `--platforms Windows` still returns domain-controller
+techniques; the filter above is editorial and you apply it when choosing what to teach. When a
+derived chain contains an infrastructure-owned technique, say in one line what it is and why it
+is someone else's problem, then move on — do not teach it in full.
+
+**Prefer actors whose technique sets sit in the application layer** when picking a chain.
+Ranked by application-layer coverage in the current data: **TeamTNT** (containers and
+workloads), **Storm-0501** (cloud application to storage), **SolarWinds Compromise** (CI/CD and
+build pipeline), then Scattered Spider and APT41.
+
 ## Cloud reference: Azure
 
 **The user works in Azure.** Every cloud example, scenario and control recommendation uses
