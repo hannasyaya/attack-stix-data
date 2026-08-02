@@ -312,15 +312,30 @@ questions that are genuinely design-time and irreversible afterwards:
 The line: the architect owns whether the evidence **exists, survives and is trustworthy**; the
 detection team owns what is done with it.
 
-#### On adversary emulation
+#### On adversary emulation — final position
 
-Asked whether micro-emulation would help. Conclusion: not as a practice — it answers "does the
-detection fire?", which is the detection team's question and creates findings the architect
-cannot fix. Do the **telemetry inventory** instead (query the workspace for whether each log
-actually exists), then take a chain to the detection team as a **tabletop**. Keep atomic tests
-in reserve for the two or three requirements where "I think we'd see it" is not good enough.
-Any test needs written authorisation and a lab — `ntdsutil` on a DC is indistinguishable from
-the real thing.
+- **No to emulation frameworks** (CALDERA, full emulation plans, purple-team exercises). They
+  answer *"did the detection fire?"* — the detection team's question — and generate findings an
+  architect cannot fix.
+- **No to Atomic Red Team on hosts.** Endpoint and AD tradecraft, out of scope, and it carries
+  real authorisation and blast-radius problems. `ntdsutil` on a domain controller is
+  indistinguishable from the real thing.
+- **Yes to control-plane assertion testing in a sandbox subscription.** Storm-0501's procedures
+  are *API calls against resources you own* — `elevateAccess/action`, `roleAssignments/write`,
+  `storageAccounts/listkeys/action`, `storageAccounts/write`. In a throwaway subscription these
+  are ordinary administration: no exploit, no malware, no production risk, no permission
+  conversation. Each answers a question the architect owns — does the event exist, does it reach
+  the workspace, and would anyone see it?
+
+The distinction that matters: **emulation tests the SOC; assertions test your design
+assumptions.** A telemetry inventory tells you a log *category* is enabled; an assertion tells
+you the specific operation produces a distinguishable event that survives.
+
+**Deliverable to build after chain 3:** `attack-learning/control-plane-assertions.md` — the
+Azure control-plane operations every application project must alert on, each traceable to a real
+adversary procedure with its ATT&CK ID and source report. Provenance is the point: *"Storm-0501
+did this, here is Microsoft's report"* is defensible in a design review; *"best practice says
+so"* is not.
 
 #### Next: application-layer chains only
 
