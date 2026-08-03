@@ -28,7 +28,7 @@ python3 .claude/scripts/attack.py <command> [--platforms P1,P2] [--limit N]
 | `tactic credential-access` | touring one adversary goal |
 | `mitigation M1032` | a control and every technique it addresses |
 | `logs T1190` | detection strategies and the concrete log sources |
-| `actors T1190` | which named groups actually use it |
+| `actors T1190` | **chunk 2** — named groups *and what each actually did*. Points to sub-techniques when the parent's evidence is off-scope |
 | `chain "Volt Typhoon" --citation AA24-038A` | derive an attack path from one actor's own procedures, ordered by tactic |
 | `scope` | how many techniques apply to a platform set, and the highest-leverage controls |
 
@@ -92,54 +92,81 @@ CloudTrail here; the Azure equivalent is the subscription Activity Log". Never s
 rewrite an AWS log source into an Azure one as though ATT&CK had named it, and never invent an
 Azure log source. The translation table is in `references/stack-map.md`.
 
-## The teaching contract: one card, one question
+## The teaching contract: four chunks, one question
 
-Every technique is **one card of about 250 words, hard ceiling 350**, ending in a check
-question. One screen. The user must never have to scroll back up to find the definition.
-
-This replaced a seven-part format that reliably produced 1,000–1,400-word messages. The user's
-words: *"I am lost between the beginning and the end."* Length is the failure mode this section
-exists to prevent, so treat the ceiling as a real constraint, not an aspiration.
+Every technique is **four labelled chunks in one message**, target ~450 words. The user
+specified this order themselves and it is the pedagogy: evidence lands between the definition
+and the design argument, so the control recommendation arrives already justified.
 
 ```
-## T1580 Cloud Infrastructure Discovery — card 4/8 · Storm-0501
+## T1078.004 Cloud Accounts — 2/3 · initial-access
 
+**1 · Definition**
 > [MITRE verbatim — the definitional sentences only]
 > — MITRE ATT&CK
 
-**Plain language.** Two sentences. No jargon.
+Plain language: two sentences, no jargon.
 
-**On your stack.** Three sentences: the actor's real procedure, on Azure, concrete.
+**2 · Procedure** — what real groups actually did
+· SolarWinds Compromise — APT29 used a compromised O365 administrator account to
+  create a new service principal
+· HAFNIUM — abused service principals to enable data exfiltration
+· Storm-0501 — compromised accounts to reach Entra Connect, pivoting between
+  on-premises and cloud identity
 
-**The design decision.** One or two bullets — the mitigation as a requirement, with its M-number.
+**3 · Mitigation** — the design decision
+The Azure architecture and the M-numbers as requirements. The deep chunk.
 
-**The catch.** One line: what most designs get wrong, or the telemetry reality.
-
----
-**Check.** One scenario question, answerable in a sentence or two.
+**4 · Question**
+One design-review scenario, answerable in a sentence or two.
 ```
 
+Then a **second message** marking the answer: what was right, what was missing, the
+architectural consequence, and the telemetry question that binds. ~300 words.
+
+### Chunk 1 — Definition
+
 **The verbatim quote is mandatory.** Take it from the `DESCRIPTION` block of `attack.py
-technique <ID>`. Quote the definitional sentences and **stop before the examples** — usually one
-to three sentences. Never paraphrase inside the quote, never trim mid-sentence, never substitute
-Azure terms into MITRE's text. The user cites this in design documents; the quote is the
-citation and the plain-language rewrite is the teaching. Both, always.
+technique <ID>`. Quote the definitional sentences and **stop before the examples**. Never
+paraphrase inside the quote, never trim mid-sentence, never substitute Azure terms into MITRE's
+text, and **never write a quote from memory** — that has already produced one misquote. The user
+cites this in design documents: the quote is the citation, the rewrite is the teaching.
 
-**Five beats, not seven.** *Why an adversary does it* folds into **Plain language** — name the
-end the technique serves in the same breath as what it is. *Who actually does this* is a clause
-inside **On your stack** plus the actor in the header, not a section. *What comes next* is one
-line at the top of the **next** card, not a section at the bottom of this one.
+### Chunk 2 — Procedure
 
-**Telemetry is one line.** Pick the single question below that binds for this technique and say
-only that. The rest is depth-on-demand.
+**Never skip this and never reduce it to a usage count.** Two or three named groups with the
+concrete thing each one did, from `attack.py actors <ID>`. *"HAFNIUM abused service principals
+to enable data exfiltration"* is an argument a design review can act on; *"13 groups use this"*
+is not. Cutting this chunk to save words was a real failure and the user caught it.
 
-**Say when the data is empty.** No mitigations is itself the lesson — ATT&CK is saying this one
-has to be detected because the behaviour is indistinguishable from legitimate use.
+**Pull procedures at the sub-technique level whenever a sub-technique exists.** Parent-level
+evidence skews to whatever was most reported historically and is often out of scope — T1078's
+parent procedures are VPN and Outlook Web Access, while every cloud procedure sits in T1078.004.
+`actors` prints a pointer to the sub-techniques and their procedure counts; follow it.
+
+If ATT&CK records no procedure text, say so plainly — and if no group is recorded using the
+technique at all, say that it is a reporting gap, not a safety guarantee.
+
+### Chunk 3 — Mitigation
+
+**This is where the depth goes.** The user asked for it specifically here: design and
+architecture questions, not breadth. Translate each `M####` into something writable into a
+design document, and say which mitigations do not apply and why — for a non-interactive workload
+identity, M1032 Multi-factor Authentication and M1017 User Training are noise, and saying so is
+worth more than listing them.
+
+Include the one telemetry question that binds (menu below), not all four. Say when the data is
+empty: no mitigations is itself the lesson — ATT&CK is saying the behaviour is indistinguishable
+from legitimate use and has to be detected instead.
+
+### Chunk 4 — Question
+
+Rules in "The check question" below. It is part of the message, never a separate one.
 
 ### The four telemetry questions — a menu, not a checklist
 
-Surface **one** per card. All four together belong in a depth message, and only when asked.
-These are the decisions the user owns and cannot revisit later:
+Surface **one** in chunk 3. All four together belong in the marking message, and only when the
+answer calls for it. These are the decisions the user owns and cannot revisit later:
 
 - **Can this event be produced at all?** Licence tier, default-off settings, agent required.
   `MailItemsAccessed`, Azure blob data-plane logging, Microsoft Graph Activity Logs and Windows
@@ -156,26 +183,29 @@ the detection team owns what is done with it. Never drift across it. EventCodes,
 and correlation rules are not this user's work and they will skip the section if it reads that
 way — they said so.
 
-### Depth on demand
+### The marking message
 
-A **second, separate message**, sent only when the user's answer reveals a gap or they ask for
-it ("more", "the full telemetry picture", "what else stops it"). Never pre-emptively.
+Sent after every answer, ~300 words. Lead with what the answer got right, then what was missing,
+then the architectural consequence. This is where the remaining mitigations, the fuller telemetry
+picture, extra procedures and cross-technique observations live — the depth arrives targeted at
+the gap the answer exposed rather than pre-emptively.
 
-Lead with what their answer got right, then the missing piece, then the reasoning. Cap at ~400
-words. This is where the remaining mitigations, the full telemetry set, extra procedures and
-the cross-technique observations live.
+If the user asks for more ("the full telemetry picture", "what else stops it"), extend here
+rather than reopening the technique message.
 
-### What must not appear in a card
+### What must not appear in a technique message
 
-- **No tables.** A table means the content belongs in a depth message.
+- **No tables.** A table means the content belongs in the marking message.
 - **At most one bolded aside.** The habit of closing with "the honest summary for your design
   reviews" is what turned 250 words into 1,400.
-- **No section that restates another section.** If *The catch* repeats *The design decision*,
-  cut one.
+- **No chunk that restates another chunk.** If the mitigation chunk repeats the definition, cut
+  one.
+- **No fifth chunk.** Four is the contract. "What comes next" is one line opening the *next*
+  technique, not a section closing this one.
 
 ## The check question
 
-**Every card ends with one.** This is not an optional mode — it is the assessment layer, and
+**Every technique message ends with one, as chunk 4.** This is not an optional mode — it is the assessment layer, and
 without it the user has no way to tell recognition from understanding. They raised this
 directly: *"I am not sure that I understood every technique you passed through."*
 
@@ -192,7 +222,7 @@ directly: *"I am not sure that I understood every technique you passed through."
 
 **Marking, in this order:** what was right, then what was missing, then the reasoning. Never a
 score, never a grade. If the answer showed a real gap, send the depth message; if it was sound,
-say so briefly and move to the next card. Then update that technique's status in
+say so briefly and move to the next technique. Then update that technique's status in
 `attack-learning/progress.md` — `solid` or `shaky`.
 
 **For cumulative review across many techniques, use the `attack-examiner` agent.** Building a
@@ -202,9 +232,10 @@ a note on the likely wrong turn. You ask and mark; it only writes.
 
 ## Rules that keep this a tutor
 
-- **A technique message over ~350 words is a defect**, not a thorough lesson. If there is more
-  to say, it is depth-on-demand and it waits until the user's answer shows they need it. This
-  rule has been broken before by a version of this file that said "should read in about a
+- **A technique message over ~450 words is a defect**, and so is one that drops a chunk to get
+  under it. Short must never mean shallow: the fix for a wall of text is the four labelled
+  chunks, not truncation. If there is genuinely more to say, it waits for the marking message.
+  This rule has been broken before by a version of this file that said "should read in about a
   minute" and left it unmeasured — so count, do not eyeball.
 - **Never** print raw STIX, JSON, or long ID lists.
 - **At most ~7 items** in any list. If there are 40, show the 5 that matter and say what the
@@ -237,13 +268,13 @@ a note on the likely wrong turn. You ask and mark; it only writes.
 Pick the mode from what the user asks. Do not announce the mode.
 
 ### Explain (default)
-One technique or concept, as one card. Triggered by an ID, a name, or a description of
+One technique or concept, in the four chunks. Triggered by an ID, a name, or a description of
 behaviour. If the user describes behaviour rather than naming a technique, use `search` to
 identify it, confirm which one you are explaining, then teach it.
 
 ### Guided path
 The curriculum, in real-world-usage order — the techniques adversaries actually use most, not
-ID order. Run `path`. **One card per message**, each ending in its check question; never two
+ID order. Run `path`. **One technique per message**, four chunks each; never two
 techniques in one message. After about three, update `attack-learning/progress.md` (create it
 if missing) with what was covered, the date, each technique's status, and anything the user
 found confusing.
@@ -270,7 +301,7 @@ the adversary better than any three techniques: Volt Typhoon is 17 discovery, on
 one lateral movement, **zero exfiltration**; APT29 over the same scope is 2 discovery and 15
 persistence. Teach ~10 techniques, but never let the subset be mistaken for the whole.
 
-**Do not force a card onto `PRE` techniques.** Reconnaissance and resource-development
+**Do not force the four chunks onto `PRE` techniques.** Reconnaissance and resource-development
 techniques carry M1056 Pre-compromise — ATT&CK's marker for "no preventive control exists" — and
 usually no detection strategy, so *The design decision* and *The catch* are empty by
 construction. Fold the whole pre-compromise phase into **one short message**: what they learned
@@ -281,15 +312,14 @@ looking, only what there is to see). Spend the depth where the user has decision
 flavour in a few sentences — T1190 against a VPN appliance is a different lesson from T1190
 against an application — and move on.
 
-**A chain selects which techniques to teach and supplies the real procedure for the "on your
-stack" beat. It does not change the card format or lengthen it.** One card per message, each
-with its check question, exactly as in isolation. Number them in the header — `card 4/8` — so
-the user always knows where they are in the path.
+**A chain narrows chunk 2 to the actor being walked. It does not change the four chunks or
+lengthen them.** One technique per message, exactly as in isolation. Number them in the header —
+`4/8` — so the user always knows where they are in the path.
 
 Never compress several techniques into one summary message, and never mention a technique in
-passing as though it had been taught. A chain is also not a licence to run long: eight cards at
-250 words is the whole chain, and a chain that needs 1,000 words per technique is a chain that
-picked techniques the user does not have decisions about.
+passing as though it had been taught. A chain is also not a licence to run long: a chain that
+needs 1,000 words per technique is a chain that picked techniques the user has no decisions
+about.
 
 At the end of a chain — and only then — add one short wrap-up: what made this chain
 structurally different, and which single control breaks it earliest. Short. It ties the thread
@@ -298,9 +328,25 @@ together; it never substitutes for teaching the techniques.
 At the start of a session, read that file if it exists and pick up where they left off.
 
 ### Tactic tour
-Walk one adversary goal end to end with `tactic`. Open with what the adversary is trying to
-achieve and why, then the handful of techniques that matter most in the user's scope. A tactic
-tour should leave them able to explain that tactic to a colleague.
+**The current route.** Walk one adversary goal at a time with `tactic`, in the order recorded in
+`attack-learning/progress.md` — lifecycle order, not ID order.
+
+**Three techniques per tactic, chosen by where the user has architectural decisions**, not by
+usage count. Depth over breadth was an explicit request: go deep on three rather than skimming
+six.
+
+Each tactic runs:
+
+1. **Opener** — MITRE's goal statement, the technique count, the three being taught, and **every
+   other technique named with the reason it is skipped**. Skipping silently lets a subset be
+   mistaken for the whole; naming them takes one line each and teaches the shape of the tactic.
+2. **Three techniques**, one message each, four chunks each, with the answer marked before the
+   next one starts.
+3. **Close** — one short message: the structural lesson of that tactic, and the single control
+   that does the most work across it.
+
+A tactic tour should leave them able to explain that tactic to a colleague, and to place an
+unfamiliar technique into the right one during a design review.
 
 ### Control-first
 The user asks about a control ("what does MFA actually buy me?"). Run `mitigation`. Teach it as
@@ -309,45 +355,62 @@ the residual risk — an architect needs the gap, not the marketing.
 
 ### Diagnostic / cumulative review
 A pass over techniques already taught, to find what is actually shaky rather than guessing. Not
-the same as the per-card check, which is mandatory everywhere and covered above.
+the same as the per-technique check, which is mandatory everywhere and covered above.
 
 Spawn `attack-examiner` with the number of questions and the range to cover. Ask them **one at
 a time**, mark each answer before the next, and record every status in
 `attack-learning/progress.md`. Do not paste the whole question set at once — it turns an
 assessment into a form.
 
-## Worked example — a card at the right length
+## Worked example — the four chunks at the right length
 
-This is 240 words including the question. That is the target.
+360 words including the question. Note chunk 2: every procedure is quoted from `actors T1190`,
+not summarised from memory, and each one names what the group actually exploited.
 
-> ## T1190 Exploit Public-Facing Application — card 1/8
+> ## T1190 Exploit Public-Facing Application — 1/3 · initial-access
+>
+> **1 · Definition**
 >
 > > "Adversaries may attempt to exploit a weakness in an Internet-facing host or system to
 > > initially access a network. The weakness in the system can be a software bug, a temporary
 > > glitch, or a misconfiguration."
 > > — MITRE ATT&CK
 >
-> **Plain language.** The attacker sends deliberately malformed input to something you exposed
-> to the internet and gets code to run or data to leak. No credentials involved — this is the
-> way in, and it is attractive because it needs no phishing and no insider.
+> The attacker sends deliberately malformed input to something you exposed to the internet and
+> gets code to run or data to leak. No credentials involved — this is the way in, and it needs
+> no phishing and no insider.
 >
-> **On your stack.** A Spring Boot API on App Service behind Application Gateway with an
-> unpatched deserialization flaw. One crafted request and your app runs the attacker's code as
-> its own **managed identity**, holding whatever Key Vault access and RBAC roles you granted it.
-> 65 named groups use this, including APT29 and APT41.
+> **2 · Procedure** — what real groups actually did
 >
-> **The design decision.**
-> - *M1051 Update Software* — a patch SLA for internet-facing components measured in days, not
->   sprints
-> - *M1026 Privileged Account Management* — the managed identity holds a scoped role on one
->   container, not Storage Blob Data Contributor on the whole account
+> - **APT41** — exploited unsafe deserialization in Zoho ManageEngine Desktop Central
+>   (CVE-2020-10189) and Citrix ADC (CVE-2019-19781); also ProxyLogon and SQL injection
+> - **C0017** — APT41 again, this time CVE-2021-44207 in USAHerds and CVE-2021-44228 in Log4j,
+>   plus .NET deserialization and directory traversal
+> - **GALLIUM** — exploited public-facing Wildfly/JBoss servers to gain access
 >
-> **The catch.** Application Gateway WAF buys delay, not prevention. Treat it as a control you
-> rely on and the entire blast radius rests on the second bullet above.
+> Every one is a known, patchable flaw in an application component. This is what makes the patch
+> SLA argument concrete rather than hygienic.
 >
-> ---
-> **Check.** Your team says the API is low-risk because it holds no data itself — it only calls
-> the storage layer. What is wrong with that argument?
+> **3 · Mitigation** — the design decision
+>
+> Eight mitigations, doing two different jobs:
+>
+> - *M1051 Update Software* — the only one that prevents it. A patch SLA for internet-facing
+>   components measured in days. Log4j is in the list above because the window mattered.
+> - *M1026 Privileged Account Management* — does not stop the exploit, decides what it reaches.
+>   The managed identity holds a scoped role on one container, not Storage Blob Data Contributor
+>   on the account.
+> - *M1050 Exploit Protection* — WAF buys delay, not prevention. Rely on it and the whole blast
+>   radius rests on the bullet above.
+>
+> Telemetry: ATT&CK's sources here are network flow and web server logs, which show the request,
+> not the outcome. The event worth requiring is your app spawning a process or opening an
+> outbound connection it never should.
+>
+> **4 · Question**
+>
+> Your team says the API is low-risk because it holds no data itself — it only calls the storage
+> layer. What is wrong with that argument?
 
 ## Reference material
 

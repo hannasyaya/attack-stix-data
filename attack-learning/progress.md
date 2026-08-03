@@ -37,13 +37,21 @@ equivalents **and says when it is translating**.
 
 ## How lessons work
 
-- **One technique per message, as a card** — about 250 words, ceiling 350. Verbatim MITRE
-  definition, then plain language, then what it looks like on the stack, then the design
-  decision, then the catch.
-- **Every card ends with a scenario question.** Answering it is how a technique moves from
-  `untested` to `solid`. Never a definition question, never a request for an ID from memory.
-- **Depth arrives on demand** — a second message with the full mitigation and telemetry picture,
-  sent only when an answer shows a gap or you ask for it.
+**One technique per message, in four chunks** — about 450 words:
+
+1. **Definition** — MITRE's exact wording, then plain language
+2. **Procedure** — what real named groups actually did with it
+3. **Mitigation** — the design decision, in Azure terms. The deep chunk
+4. **Question** — one design-review scenario
+
+Then a second message marking the answer, which is where the remaining depth goes.
+
+- **Chunk 2 is never skipped.** A named group and the concrete thing it did is what makes a
+  technique arguable in a design review. Reducing it to "13 groups use this" was a failure.
+- **Procedures come from the sub-technique**, not the parent, whenever one exists — parent-level
+  evidence skews to whatever was most reported and is often out of scope.
+- **Answering the question is how a technique moves from `untested` to `solid`.** Never a
+  definition question, never a request for an ID from memory.
 - **Verbatim quotes are always checked against the query script**, never written from memory.
 
 Rules live in `.claude/skills/attack-tutor/SKILL.md`. Assessment questions are built by the
@@ -81,9 +89,12 @@ and the one closest to the user's own surface.
 | 12 | TA0011 command-and-control | 45 | not started |
 | 13 | TA0005 stealth | 146 | not started |
 
-**Sampled, not covered.** Persistence (109), privilege-escalation (96) and stealth (146) are too
-large to walk completely. Each gets the application-layer subset — roughly four cards — and an
-explicit statement of what is being left out, so the subset is never mistaken for the whole.
+**Three techniques per tactic**, chosen by where you have architectural decisions rather than by
+usage count — depth over breadth. Every other technique in the tactic is **named in the opener
+with the reason it is skipped**, so a subset is never mistaken for the whole.
+
+Initial access: T1190 (done), **T1078.004 Cloud Accounts**, **T1195.002 Compromise Software
+Supply Chain**.
 
 **Not in the table:** reconnaissance (TA0043) and resource-development (TA0042). Both are
 `PRE`-platform, carry M1056 Pre-compromise — ATT&CK's marker for "no preventive control exists" —
