@@ -20,27 +20,59 @@ it is doing so.
 
 ## Status
 
-**8 techniques covered** — one complete intrusion chain, end to end, taught 2026-07-31:
+**25 techniques taught** across four chains. The tutor reads the table below to decide what to
+re-test; the narrative history further down holds the findings.
 
-> T1190 / T1078 (get in) → T1078.001, T1078.004 (authenticate) → T1098 (stay) →
-> T1530 (take) → T1567 (send) → T1486 (destroy)
+### Retention table
 
-**15 techniques covered.** Chain 1 completed 2026-08-01 — seven more techniques, spine APT29:
+`untested` — taught but never checked · `shaky` — checked, answer showed a gap · `solid` —
+checked and answered well · `out of scope` — taught before the 2026-08-02 AppSec scope
+correction and not worth re-testing; the transferable principle is recorded in the findings
+instead.
 
-> T1199 → T1621 → T1556.007 → T1649 → T1098.005 → T1685.002 → T1114.002
+| Technique | Chain | Taught | Status |
+|---|---|---|---|
+| T1190 Exploit Public-Facing Application | 0, 2, 3 | 2026-07-31 | untested |
+| T1078 Valid Accounts | 0 | 2026-07-31 | untested |
+| T1078.001 Default Accounts | 0 | 2026-07-31 | untested |
+| T1078.004 Cloud Accounts | 0, 3 | 2026-07-31 | untested |
+| T1098 Account Manipulation | 0 | 2026-07-31 | untested |
+| T1530 Data from Cloud Storage | 0 | 2026-07-31 | untested |
+| T1567 Exfiltration Over Web Service | 0 | 2026-07-31 | untested |
+| T1486 Data Encrypted for Impact | 0 | 2026-07-31 | untested |
+| T1199 Trusted Relationship | 1 | 2026-08-01 | untested |
+| T1621 MFA Request Generation | 1 | 2026-08-01 | untested |
+| T1556.007 Hybrid Identity | 1 | 2026-08-01 | untested |
+| T1649 Steal or Forge Auth Certificates | 1 | 2026-08-01 | untested |
+| T1098.005 Device Registration | 1 | 2026-08-01 | untested |
+| T1685.002 Disable or Modify Cloud Log | 1 | 2026-08-01 | untested |
+| T1114.002 Remote Email Collection | 1 | 2026-08-01 | out of scope |
+| T1596.005 Wordlist Scanning | 2 | 2026-08-01 | out of scope |
+| T1133 External Remote Services | 2 | 2026-08-01 | out of scope |
+| T1078.002 Domain Accounts | 2 | 2026-08-02 | out of scope |
+| T1003.003 NTDS | 2 | 2026-08-02 | out of scope |
+| T1654 Log Enumeration | 2 | 2026-08-02 | untested |
+| T1090.001 Internal Proxy | 2 | 2026-08-02 | out of scope |
+| T1560.001 Archive via Utility | 2 | 2026-08-02 | out of scope |
+| T1098.003 Additional Cloud Roles | 3 | 2026-08-02 | untested |
+| T1580 Cloud Infrastructure Discovery | 3 | 2026-08-03 | untested |
+| T1087.004 Cloud Account (discovery) | 3 | 2026-08-03 | untested |
 
-**Next: three more chains**, each with a different shape, before applying any of this to a real
-project. Chains are derived from real threat groups rather than narrated — pulling a named
-group's techniques and ordering them by tactic gives an evidence-backed path.
+Chain 2 was never logged technique-by-technique at the time; its rows are reconstructed from
+the session and its transferable findings are recorded under the 2026-08-02 entry.
 
-1. ~~**Identity control subversion** (spine: APT29)~~ — **done 2026-08-01**. Attackers
-   corrupting federation trust and the certificate authority rather than evading controls
-2. **Business email compromise** — same identity substrate, completely different endgame
-   (a payment, not encryption) ← **next**
-3. **Container / AKS escape** — identity inherited rather than stolen
-4. **Supply chain / CI-CD** — compromise at build time, upstream of every runtime control
+### Where the chains stand
 
-Then a real Azure design with the `attack-threat-model` skill.
+- **Chain 0** — the base intrusion chain, 2026-07-31
+- **Chain 1** — identity control subversion, spine APT29, completed 2026-08-01
+- **Chain 2** — Volt Typhoon / living off the land, **abandoned at technique 9** on 2026-08-02
+  when the scope correction landed; lessons kept, remaining host-forensics steps dropped
+- **Chain 3** — Storm-0501, cloud application to storage — **in progress**, 4 of 8 cards done
+- **Chain 4** — TeamTNT, containers and orchestrator
+- **Chain 5** — SolarWinds Compromise, CI/CD and build pipeline
+
+Then `attack-learning/control-plane-assertions.md`, and a real Azure design with the
+`attack-threat-model` skill.
 
 ## Suggested route
 
@@ -348,6 +380,41 @@ Ranked by application-layer technique coverage in the data:
 | **SolarWinds Compromise** | 6 | **CI/CD**: build compromise, code repositories, cloud identity |
 
 Chain 3 is Storm-0501, starting 2026-08-02.
+
+### 2026-08-03 — format change: cards and checks
+
+Two problems raised after ~25 techniques, both fair.
+
+**The lessons were too long.** *"I am lost between the beginning and the end."* Measurable: the
+T1580 message ran ~1,400 words. The seven-part contract asked for seven labelled sections, each
+grew a table or a closing aside, and by "what comes next" the definition had scrolled off. The
+skill file already said the whole thing "should read in about a minute" — an unmeasured
+instruction that was ignored for the entire session.
+
+**Nothing tested understanding.** *"I am not sure that I understood every technique you passed
+through."* Every technique had been delivered as prose read once. Recognition feels like
+comprehension and there was no point where the difference surfaced. The skill's *check
+understanding* mode essentially never fired.
+
+**One fix for both:** move depth out of the lecture and into the response to an answer.
+
+- **The card** replaces the seven-part contract. ~250 words, ceiling 350, five beats: verbatim
+  MITRE quote → plain language → on your stack → the design decision → the catch. The quote
+  stays; it is what makes this citable in a design document.
+- **Telemetry drops from four questions to one** — the one that binds for that technique. The
+  full four remain in the skill as a menu.
+- **Every card ends with a scenario question.** Not a mode, a requirement. Marking is what was
+  right, then what was missing, then the reasoning. No scores.
+- **Depth on demand** — a second message, ~400 words, only when an answer shows a gap or the
+  user asks. Never pre-emptive.
+- **`attack-examiner`** — new read-only agent that builds assessment questions from this file
+  plus the bundle. Teaching stays in the main conversation; a subagent has no memory of what
+  confused the user, and that context is the whole value. The agent only writes questions.
+
+**Method note worth keeping:** while rewriting the skill's worked example I quoted T1190's
+description from memory as *"may attempt to take advantage of a weakness"*. ATT&CK says
+*"may attempt to exploit a weakness"*. Caught by running the query. Every verbatim quote gets
+checked against the script — memory is not a source.
 
 ## Open questions
 
