@@ -100,10 +100,9 @@ technique into the right one during a design review without help.
 `untested` — taught but never checked · `shaky` — checked, answer showed a gap · `solid` —
 checked and answered well.
 
-*Empty. First entry lands with the first card.*
-
 | Technique | Tactic | Taught | Status |
 |---|---|---|---|
+| T1190 Exploit Public-Facing Application | initial-access | 2026-08-03 | **solid** |
 
 ---
 
