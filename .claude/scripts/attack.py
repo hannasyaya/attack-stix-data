@@ -107,6 +107,7 @@ class Attack:
         self.subs_of = defaultdict(list)  # parent id -> [sub-technique]
         self.parent_of = {}  # sub id -> parent
         self.procedures = defaultdict(list)  # actor id -> [(technique, description)]
+        self.procedures_by_tech = defaultdict(list)  # technique id -> [(actor, description)]
 
         for r in rels:
             if not live(r):
@@ -123,7 +124,11 @@ class Attack:
                     self.used_by[dst["id"]].append(src)
                     # Keep the procedure text: this is the evidence layer, and the
                     # citations in it are what let a chain be pinned to one report.
-                    self.procedures[src["id"]].append((dst, r.get("description") or ""))
+                    # Indexed both ways — by actor to walk one adversary's path, by
+                    # technique to answer "what did real groups actually do with this".
+                    desc = r.get("description") or ""
+                    self.procedures[src["id"]].append((dst, desc))
+                    self.procedures_by_tech[dst["id"]].append((src, desc))
             elif kind == "detects" and dst["type"] == "attack-pattern":
                 self.detected_by[dst["id"]].append(src)
             elif kind == "subtechnique-of":
@@ -383,9 +388,43 @@ def cmd_actors(a: Attack, args):
         sys.exit(f"No technique matching {args.id!r}")
     users = {g["id"]: g for g in a.used_by.get(t["id"], [])}.values()
     print(f"{eid(t)} {t['name']} — used by {len(users)} groups/campaigns\n")
-    for g in sorted(users, key=lambda x: x["name"]):
+
+    # The procedure text is the evidence layer: what an actor actually did beats
+    # the fact that it appears in a list. Actors with text come first, since a
+    # bare relationship teaches nothing.
+    texts = {}
+    for actor, desc in a.procedures_by_tech.get(t["id"], []):
+        if desc and actor["id"] not in texts:
+            texts[actor["id"]] = clean(desc, limit=400)
+
+    ordered = sorted(users, key=lambda x: (x["id"] not in texts, x["name"]))
+    for g in ordered[: args.limit]:
         kind = "campaign" if g["type"] == "campaign" else "group"
         print(f"  {eid(g) or '-':8} {g['name'][:34]:34} ({kind})")
+        if g["id"] in texts:
+            print(wrap(texts[g["id"]], "       "))
+        print()
+
+    shown, total = len(ordered[: args.limit]), len(ordered)
+    if shown < total:
+        print(f"  ... {total - shown} more (raise --limit to see them)")
+    if not total:
+        # Absence of reporting, not evidence of safety — worth saying out loud.
+        print("  No group or campaign in ATT&CK is recorded using this technique.")
+    elif not texts:
+        print("  ATT&CK records no procedure text for this technique — only that it is used.")
+    elif len(texts) < total:
+        print(f"  {len(texts)} of {total} have a documented procedure; the rest are bare "
+              f"relationships.")
+
+    subs = a.subs_of.get(t["id"], [])
+    if subs:
+        print("\n  Procedures here are parent-level and skew to whatever was most reported.\n"
+              "  Check the sub-techniques for evidence closer to a specific platform:")
+        for s in sorted(subs, key=lambda x: -a.usage(x))[:6]:
+            n = len({k for k, d in
+                     ((act["id"], d) for act, d in a.procedures_by_tech.get(s["id"], [])) if d})
+            print(f"    {eid(s):12} {s['name'][:38]:38} {n} with procedure text")
 
 
 def cmd_logs(a: Attack, args):
