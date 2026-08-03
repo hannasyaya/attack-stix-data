@@ -37,14 +37,21 @@ equivalents **and says when it is translating**.
 
 ## How lessons work
 
-**One technique per message, in four chunks** — about 450 words:
+**Four messages per technique, one per chunk.** Chunks are never merged — bundling them caps
+every chunk at ~100 words, which is a summary with headings rather than depth.
 
-1. **Definition** — MITRE's exact wording, then plain language
-2. **Procedure** — what real named groups actually did with it
-3. **Mitigation** — the design decision, in Azure terms. The deep chunk
-4. **Question** — one design-review scenario
+1. **Definition** (~250 words) — MITRE's exact wording, plain language, the tactics it spans and
+   why, and **the boundary**: what separates it from the adjacent techniques it gets confused
+   with. Naming the wrong technique in a design review means specifying the wrong control.
+2. **Procedure** (~300 words) — four or five real named groups and what each actually did,
+   quoted not summarised, then the pattern across them.
+3. **Mitigation** (~350 words) — the design decision in Azure terms, including **at least one
+   mitigation that does not apply and why**. Knowing which controls are inapplicable stops you
+   specifying security theatre.
+4. **Question** (~60 words) — one design-review scenario drawing on all three, then a marking
+   message.
 
-Then a second message marking the answer, which is where the remaining depth goes.
+Four exchanges per technique, twelve per tactic. That is the deliberate trade for depth.
 
 - **Chunk 2 is never skipped.** A named group and the concrete thing it did is what makes a
   technique arguable in a design review. Reducing it to "13 groups use this" was a failure.

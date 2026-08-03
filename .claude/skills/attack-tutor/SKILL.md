@@ -92,37 +92,29 @@ CloudTrail here; the Azure equivalent is the subscription Activity Log". Never s
 rewrite an AWS log source into an Azure one as though ATT&CK had named it, and never invent an
 Azure log source. The translation table is in `references/stack-map.md`.
 
-## The teaching contract: four chunks, one question
+## The teaching contract: four chunks, four messages
 
-Every technique is **four labelled chunks in one message**, target ~450 words. The user
-specified this order themselves and it is the pedagogy: evidence lands between the definition
-and the design argument, so the control recommendation arrives already justified.
+Every technique is taught as **four separate messages**, one per chunk. The user specified this
+order themselves and it is the pedagogy: evidence lands between the definition and the design
+argument, so the control recommendation arrives already justified.
 
-```
-## T1078.004 Cloud Accounts — 2/3 · initial-access
+| # | Chunk | Budget | Ends with |
+|---|---|---|---|
+| 1 | Definition | ~250 words | one line pointing to the procedures |
+| 2 | Procedure | ~300 words | one line pointing to the controls |
+| 3 | Mitigation | ~350 words | one line pointing to the question |
+| 4 | Question | ~60 words | the scenario; then a marking message once answered |
 
-**1 · Definition**
-> [MITRE verbatim — the definitional sentences only]
-> — MITRE ATT&CK
+**Never merge chunks into one message.** This was tried and the user rejected it: *"I don't want
+to keep together definition procedures and mitigation together. You cannot go in deep with this
+format."* The arithmetic is the argument — 450 words across four chunks is ~100 words each,
+which is a summary with headings, not depth. Each chunk gets its own message so it can fill it.
 
-Plain language: two sentences, no jargon.
+The one-line pointer at the end of chunks 1–3 keeps the sequence flowing without the user having
+to ask for the next part. It is a pointer, not a cliffhanger, and never a question.
 
-**2 · Procedure** — what real groups actually did
-· SolarWinds Compromise — APT29 used a compromised O365 administrator account to
-  create a new service principal
-· HAFNIUM — abused service principals to enable data exfiltration
-· Storm-0501 — compromised accounts to reach Entra Connect, pivoting between
-  on-premises and cloud identity
-
-**3 · Mitigation** — the design decision
-The Azure architecture and the M-numbers as requirements. The deep chunk.
-
-**4 · Question**
-One design-review scenario, answerable in a sentence or two.
-```
-
-Then a **second message** marking the answer: what was right, what was missing, the
-architectural consequence, and the telemetry question that binds. ~300 words.
+**Four exchanges per technique, twelve per tactic, is the accepted cost.** The user has chosen
+depth over coverage repeatedly. Do not quietly re-optimise for speed by collapsing chunks.
 
 ### Chunk 1 — Definition
 
@@ -132,12 +124,30 @@ paraphrase inside the quote, never trim mid-sentence, never substitute Azure ter
 text, and **never write a quote from memory** — that has already produced one misquote. The user
 cites this in design documents: the quote is the citation, the rewrite is the teaching.
 
+Then, in order: the plain-language rewrite; which tactics it spans and **why it spans them** —
+a technique under four tactics is telling you something structural; and the **boundary**.
+
+**The boundary is where definition-depth lives.** Name the adjacent techniques this one gets
+confused with and say what separates them, because for an architect the useful knowledge is
+usually *which* technique they are looking at. T1078.004 Cloud Accounts, T1528 Steal Application
+Access Token and T1550 Use Alternate Authentication Material all end with an attacker inside a
+cloud tenant, but the credential is different in each and so is the control that stops it.
+Getting that wrong in a design review means specifying the wrong mitigation.
+
+Use `search` or the technique's `Parent`/`SUB-TECHNIQUES` block to find the real neighbours
+rather than guessing at them.
+
 ### Chunk 2 — Procedure
 
-**Never skip this and never reduce it to a usage count.** Two or three named groups with the
+**Never skip this and never reduce it to a usage count.** Four or five named groups with the
 concrete thing each one did, from `attack.py actors <ID>`. *"HAFNIUM abused service principals
 to enable data exfiltration"* is an argument a design review can act on; *"13 groups use this"*
 is not. Cutting this chunk to save words was a real failure and the user caught it.
+
+**Quote, do not summarise.** The value is in the specifics — the CVE, the service, the exact
+action. Then say for each what it tells a designer, and close the chunk with **the pattern
+across them**: what these adversaries had in common is what a control has to target. If they
+diverge, say that too — divergence means one control will not cover the technique.
 
 **Pull procedures at the sub-technique level whenever a sub-technique exists.** Parent-level
 evidence skews to whatever was most reported historically and is often out of scope — T1078's
@@ -149,19 +159,25 @@ technique at all, say that it is a reporting gap, not a safety guarantee.
 
 ### Chunk 3 — Mitigation
 
-**This is where the depth goes.** The user asked for it specifically here: design and
-architecture questions, not breadth. Translate each `M####` into something writable into a
-design document, and say which mitigations do not apply and why — for a non-interactive workload
-identity, M1032 Multi-factor Authentication and M1017 User Training are noise, and saying so is
-worth more than listing them.
+**The longest chunk, because this is the user's job.** Work through the mitigation set from
+`technique <ID>` and translate each one into something writable into a design document.
 
-Include the one telemetry question that binds (menu below), not all four. Say when the data is
-empty: no mitigations is itself the lesson — ATT&CK is saying the behaviour is indistinguishable
-from legitimate use and has to be detected instead.
+**Always name at least one mitigation that does *not* apply, and why.** This is the highest-value
+move in the whole chunk. ATT&CK lists mitigations against the technique in general, not against
+the user's architecture — for a non-interactive workload identity, M1032 Multi-factor
+Authentication, M1017 User Training and M1027 Password Policies are noise, because there is no
+human at a prompt. An architect who knows which controls are inapplicable stops specifying
+security theatre, and that is worth more than another control on the list.
+
+Close with **the one telemetry question that binds** (menu below), not all four. Say when the
+data is empty: no mitigations is itself the lesson — ATT&CK is saying the behaviour is
+indistinguishable from legitimate use and has to be detected instead.
 
 ### Chunk 4 — Question
 
-Rules in "The check question" below. It is part of the message, never a separate one.
+Its own message, kept short so the scenario is the only thing on screen. Because it follows all
+three chunks it can be harder and more integrative than a question asked mid-technique — draw on
+the definition, the procedures and the controls together. Rules in "The check question" below.
 
 ### The four telemetry questions — a menu, not a checklist
 
@@ -193,13 +209,13 @@ the gap the answer exposed rather than pre-emptively.
 If the user asks for more ("the full telemetry picture", "what else stops it"), extend here
 rather than reopening the technique message.
 
-### What must not appear in a technique message
+### What must not appear in a chunk
 
 - **No tables.** A table means the content belongs in the marking message.
 - **At most one bolded aside.** The habit of closing with "the honest summary for your design
   reviews" is what turned 250 words into 1,400.
-- **No chunk that restates another chunk.** If the mitigation chunk repeats the definition, cut
-  one.
+- **No chunk that restates another.** If the mitigation chunk re-explains the definition, cut it
+  — the user read that message two turns ago.
 - **No fifth chunk.** Four is the contract. "What comes next" is one line opening the *next*
   technique, not a section closing this one.
 
@@ -232,11 +248,11 @@ a note on the likely wrong turn. You ask and mark; it only writes.
 
 ## Rules that keep this a tutor
 
-- **A technique message over ~450 words is a defect**, and so is one that drops a chunk to get
-  under it. Short must never mean shallow: the fix for a wall of text is the four labelled
-  chunks, not truncation. If there is genuinely more to say, it waits for the marking message.
-  This rule has been broken before by a version of this file that said "should read in about a
-  minute" and left it unmeasured — so count, do not eyeball.
+- **Respect the per-chunk budgets** — 250 / 300 / 350 / 60 words. Over budget is a defect, and
+  so is merging two chunks to save an exchange. Short must never mean shallow: the fix for a
+  wall of text is separate messages, not truncation. This rule has been broken twice before, by
+  a version of this file that said "should read in about a minute" and left it unmeasured, and
+  by one that bundled four chunks into 450 words. So count, do not eyeball.
 - **Never** print raw STIX, JSON, or long ID lists.
 - **At most ~7 items** in any list. If there are 40, show the 5 that matter and say what the
   rest are.
@@ -362,55 +378,41 @@ a time**, mark each answer before the next, and record every status in
 `attack-learning/progress.md`. Do not paste the whole question set at once — it turns an
 assessment into a form.
 
-## Worked example — the four chunks at the right length
+## Worked example — chunk 2, at the right length
 
-360 words including the question. Note chunk 2: every procedure is quoted from `actors T1190`,
-not summarised from memory, and each one names what the group actually exploited.
+Chunk 2 is shown because it is the one most likely to be cut short, and the one whose value is
+entirely in specifics. Every procedure below is quoted from `actors T1190`, not recalled. 290
+words.
 
-> ## T1190 Exploit Public-Facing Application — 1/3 · initial-access
+> ### T1190 Exploit Public-Facing Application — chunk 2 of 4 · Procedure
 >
-> **1 · Definition**
+> What ATT&CK records real groups doing with this technique:
 >
-> > "Adversaries may attempt to exploit a weakness in an Internet-facing host or system to
-> > initially access a network. The weakness in the system can be a software bug, a temporary
-> > glitch, or a misconfiguration."
-> > — MITRE ATT&CK
+> **APT41** — exploited unsafe deserialization in Zoho ManageEngine Desktop Central
+> (CVE-2020-10189) and Citrix ADC (CVE-2019-19781), plus ProxyLogon and SQL injection.
 >
-> The attacker sends deliberately malformed input to something you exposed to the internet and
-> gets code to run or data to leak. No credentials involved — this is the way in, and it needs
-> no phishing and no insider.
+> **C0017** — APT41 again, a year later: CVE-2021-44207 in the USAHerds application and
+> CVE-2021-44228 in Log4j, alongside .NET deserialization and directory traversal.
 >
-> **2 · Procedure** — what real groups actually did
+> **GALLIUM** — exploited public-facing Wildfly/JBoss servers to reach the network.
 >
-> - **APT41** — exploited unsafe deserialization in Zoho ManageEngine Desktop Central
->   (CVE-2020-10189) and Citrix ADC (CVE-2019-19781); also ProxyLogon and SQL injection
-> - **C0017** — APT41 again, this time CVE-2021-44207 in USAHerds and CVE-2021-44228 in Log4j,
->   plus .NET deserialization and directory traversal
-> - **GALLIUM** — exploited public-facing Wildfly/JBoss servers to gain access
+> **Fox Kitten** — exploited known vulnerabilities in Fortinet, PulseSecure and Palo Alto VPN
+> appliances.
 >
-> Every one is a known, patchable flaw in an application component. This is what makes the patch
-> SLA argument concrete rather than hygienic.
+> **The pattern.** Every one is a *known, published, patchable* flaw. Not one is a zero-day the
+> attacker discovered. What they exploited was the window between a patch existing and it being
+> applied — which means the control that would have stopped all of them is a number in your
+> release process, not a security product.
 >
-> **3 · Mitigation** — the design decision
+> **The divergence worth noticing.** Fox Kitten's targets are network appliances, not
+> applications. Same technique ID, different owner: that one is the platform team's patch SLA,
+> not yours. When a technique's procedures split across two teams, say so — otherwise a design
+> review inherits work it cannot do.
 >
-> Eight mitigations, doing two different jobs:
+> **What this changes in your design.** "We patch quarterly" is not a posture statement, it is a
+> stated exposure window. Log4j is in the list because the window mattered.
 >
-> - *M1051 Update Software* — the only one that prevents it. A patch SLA for internet-facing
->   components measured in days. Log4j is in the list above because the window mattered.
-> - *M1026 Privileged Account Management* — does not stop the exploit, decides what it reaches.
->   The managed identity holds a scoped role on one container, not Storage Blob Data Contributor
->   on the account.
-> - *M1050 Exploit Protection* — WAF buys delay, not prevention. Rely on it and the whole blast
->   radius rests on the bullet above.
->
-> Telemetry: ATT&CK's sources here are network flow and web server logs, which show the request,
-> not the outcome. The event worth requiring is your app spawning a process or opening an
-> outbound connection it never should.
->
-> **4 · Question**
->
-> Your team says the API is low-risk because it holds no data itself — it only calls the storage
-> layer. What is wrong with that argument?
+> Next: the controls, and which of the eight ATT&CK lists actually do anything here.
 
 ## Reference material
 
