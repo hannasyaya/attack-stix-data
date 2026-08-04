@@ -47,7 +47,7 @@ endpoint security.
 | 2 | Resource Development | MSIs signed by shell-company certs ("LLC Vector", "LLC Resource+") | T1588.003 Code Signing Certificates |
 | 3 | Initial Access | Victim downloads trojanized MSI from the poisoned result | T1189 Drive-by Compromise |
 | 4 | Execution | MSI copied to a network share, then run by an IT admin from `explorer.exe` | T1204.002 Malicious File; T1218.007 Msiexec |
-| 5 | Stealth | Signed MSI + decoy install of the real OpManager | T1553.002 Code Signing; T1036.005 Match Legitimate Resource Name or Location |
+| 5 | Defense Impairment / Stealth | Signed MSI + decoy install of the real OpManager | T1553.002 Code Signing (defense-impairment); T1036.005 Match Legitimate Resource Name or Location (stealth) |
 | 6 | Stealth / Execution | `consent.exe` relocated to `%TEMP%\ApplicationInstallationFolder_11` side-loads malicious `msimg32.dll` | T1574.001 DLL |
 | 7 | Discovery | `GetSystemDefaultLocaleName()` checked against 27 CIS locales; exits on match | T1614.001 System Language Discovery |
 | 8 | Stealth | Loader performs environment and virtualization checks | T1497 Virtualization/Sandbox Evasion |
