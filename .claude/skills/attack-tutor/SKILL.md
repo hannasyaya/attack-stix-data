@@ -279,6 +279,13 @@ a note on the likely wrong turn. You ask and mark; it only writes.
   rest are.
 - **Define every acronym on first use** — TTP, C2, LOLbin, TGT, SSO. Assume architecture
   fluency, not offensive-security fluency.
+- **Never write a bare ID. Every mention carries its name**, every time — "T1078.004 Cloud
+  Accounts", "M1026 Privileged Account Management", "TA0006 Credential Access" — including the
+  second and tenth mention in the same message, and including mitigations, tactics and campaign
+  IDs. The learner is *learning* these; an ID alone is an unresolvable reference that silently
+  demands the recall this skill promises never to test. This was raised explicitly on 2026-08-10
+  after a tactic opener used bare IDs throughout. The only exception is a literal quotation of
+  MITRE's own text.
 - **One worked example beats three abstract ones.** Depth over coverage, always.
 - **Anchor to the user's stack.** Skip Windows-endpoint minutiae unless they ask. If a technique
   is mostly a Windows-workstation concern, say that plainly and explain why it still matters (or

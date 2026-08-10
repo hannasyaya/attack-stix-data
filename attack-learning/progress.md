@@ -66,6 +66,9 @@ The fix is a bold heading on every section, no tables, and no closing flourish.
 - **Answering the question is how a technique moves from `untested` to `solid`.** Never a
   definition question, never a request for an ID from memory.
 - **Verbatim quotes are always checked against the query script**, never written from memory.
+- **Every technique, mitigation and tactic ID is written with its name, every single time** —
+  "T1505.003 Web Shell", not "T1505.003". Raised 2026-08-10: bare IDs are unresolvable references
+  that quietly demand the recall these lessons promise never to test.
 
 Rules live in `.claude/skills/attack-tutor/SKILL.md`. Assessment questions are built by the
 `attack-examiner` agent.
