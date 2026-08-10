@@ -127,9 +127,36 @@ identity attacks skip entirely.
 | 12 | TA0112 defense-impairment | 34 | not started |
 | 13 | TA0005 stealth | 141 | not started |
 
-**Three techniques per tactic**, chosen by where you have architectural decisions rather than by
-usage count — depth over breadth. Every other technique in the tactic is **named in the opener
-with the reason it is skipped**, so a subset is never mistaken for the whole.
+### How many techniques per tactic
+
+The user handed this decision to the tutor on 2026-08-10 — *"I don't [know] if it is the right
+number. I will let you decide the most important techniques for each tactic."* The fixed three
+was arbitrary: it applied the same count to a tactic with 17 techniques and one with 141.
+
+**The rule: teach a technique when it carries a design decision you cannot get from another
+technique in the same tactic.** Everything else is named and skipped in the opener, so a subset
+is never mistaken for the whole. **Variation count is not decision count** — Stealth's 141
+techniques are largely different ways to do about five things; Lateral Movement's 19 are
+genuinely different problems.
+
+| Tactic | Teach | Why |
+|---|---|---|
+| Initial Access (21) | 3 | On-prem has few doors: a person, an exposed service, a working credential |
+| Execution (48) | 4 | Where on-prem intrusions live — scripting, WMI, client-side exploitation, user-run files |
+| Persistence (91) | 5 | The one tactic where mechanism diversity *is* the lesson |
+| Privilege Escalation (79) | 3 | Much of it is persistence reused; three distinct escalation ideas |
+| Credential Access (58) | 4 | Memory, directory database, Kerberos, guessing — four different controls |
+| Discovery (42) | 2 | High volume, low decision diversity. The *pattern* is the lesson |
+| Lateral Movement (19) | 4 | Smallest tactic, second-largest allocation — the cloud track left it blank |
+| Collection (32) | 2 | |
+| Command and Control (45) | 3 | Protocol variations; the decisions are all egress design |
+| Exfiltration (17) | 2 | |
+| Impact (30) | 2 | Encryption, and the recovery inhibition that makes it work |
+| Defense Impairment (34) | 3 | |
+| Stealth (141) | 4 | Sampled hard, with an explicit statement of what is left out |
+
+**41 techniques total.** Two deliberate inversions of tactic size: Discovery gets 2 from 42,
+Lateral Movement gets 4 from 19.
 
 **Cloud track, completed 2026-08-10 before the scope change** — kept for the return trip, not
 repeated: initial-access (T1190 Exploit Public-Facing Application, T1078.004 Cloud Accounts,
