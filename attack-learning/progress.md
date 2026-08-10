@@ -130,6 +130,7 @@ checked and answered well.
 | T1078.004 Cloud Accounts | initial-access | 2026-08-10 | **shaky** |
 | T1195.002 Compromise Software Supply Chain | initial-access | 2026-08-10 | **solid** |
 | T1552.001 Credentials In Files | credential-access | 2026-08-10 | **shaky** |
+| T1528 Steal Application Access Token | credential-access | 2026-08-10 | **solid** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -179,7 +180,19 @@ data-plane operation, and that logging is **off by default**.
 (2026-08-10). Twice in three techniques — MFA imagined to cover a machine identity (T1078.004),
 a managed identity imagined to restrict access from the app's own context (T1552.001). The
 correcting question for any specified control: *what is on the inside of its boundary?* That is
-where the attacker is standing.
+where the attacker is standing. **Corrected unaided on T1528** — secret rotation identified as
+closing the T1078.004 path while leaving the issued token untouched.
+
+**Rotating a credential does not revoke an issued token, and a workload has no session to end**
+(2026-08-10, from T1528). The OAuth client-credentials flow issues **no refresh token**, so a
+compromised service principal has nothing to revoke and nothing to renew — containment is a
+bounded wait on access-token expiry (Entra default roughly an hour), and in that window the only
+levers are on the resource side: strip role assignments, or block at the resource. "Revoke
+sign-in sessions" is a **user** operation and has no target here; it is the right tool only for
+a delegated user flow. Rotation is also incomplete on its own: an app registration can hold
+several secrets and certificates, so enumerate every credential on it — an attacker-added one
+(**T1098.001 Additional Cloud Credentials**) survives rotating yours, and is the most common
+reason a "contained" identity incident is not.
 
 ### Tactic 1 close — initial-access (2026-08-10)
 
