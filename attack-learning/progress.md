@@ -88,8 +88,8 @@ and the one closest to the user's own surface.
 
 | # | Tactic | In scope | Status |
 |---|---|---|---|
-| 1 | TA0001 initial-access | 22 | **next** |
-| 2 | TA0006 credential-access | 65 | not started |
+| 1 | TA0001 initial-access | 22 | **done** 2026-08-10 |
+| 2 | TA0006 credential-access | 65 | **next** |
 | 3 | TA0003 persistence | 109 | not started |
 | 4 | TA0004 privilege-escalation | 96 | not started |
 | 5 | TA0007 discovery | 49 | not started |
@@ -106,8 +106,8 @@ and the one closest to the user's own surface.
 usage count — depth over breadth. Every other technique in the tactic is **named in the opener
 with the reason it is skipped**, so a subset is never mistaken for the whole.
 
-Initial access: T1190 (done), **T1078.004 Cloud Accounts**, **T1195.002 Compromise Software
-Supply Chain**.
+Initial access (done): T1190, T1078.004 Cloud Accounts, T1195.002 Compromise Software Supply
+Chain.
 
 **Not in the table:** reconnaissance (TA0043) and resource-development (TA0042). Both are
 `PRE`-platform, carry M1056 Pre-compromise — ATT&CK's marker for "no preventive control exists" —
@@ -128,11 +128,13 @@ checked and answered well.
 |---|---|---|---|
 | T1190 Exploit Public-Facing Application | initial-access | 2026-08-03 | **solid** |
 | T1078.004 Cloud Accounts | initial-access | 2026-08-10 | **shaky** |
+| T1195.002 Compromise Software Supply Chain | initial-access | 2026-08-10 | **solid** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
 principal is breached, and the answer was that the attacker still needs the user's MFA device.
-Retest this, and retest the does-not-apply reasoning generally.
+Not an open gap, though: the same applicability reasoning was reached **unaided** one technique
+later on T1195.002. Retest it in tactic 2 rather than reteaching it.
 
 ---
 
@@ -148,6 +150,39 @@ is a separate premium licence and supports only location and risk conditions —
 second factor a machine can present. *"We require MFA"* is therefore a statement about a subset
 of the authentication surface, and the subset excludes every machine identity in the tenant.
 **Naming the inapplicable control is the design-review move** — it is usually news in the room.
+
+**Code signing attests origin and post-signing integrity — never pre-signing integrity**
+(2026-08-10, from T1195.002). A valid signature says who produced the artifact and that nobody
+altered it *after* it was signed. Whether the publisher's build environment was already
+compromised is outside what the mechanism can assert, and that is precisely where APT41 worked
+("injected malicious code into legitimate, signed files" from inside production) and where the
+3CX attacker worked. Practical consequence: signature verification **splits this technique's
+procedures in two.** Blind against publisher-build compromise (SolarWinds Orion, 3CX, M.E.Doc,
+APT41); effective against repackaged or lookalike artifacts (Moonstone Sleet's trojanised PuTTY,
+GOLD SOUTHFIELD's backdoored installers from a compromised download site). Specify the control,
+knowing which half it covers. Phrasing for the room: *"signing gives us provenance and
+tamper-evidence after the fact — no assurance about the vendor's build environment."*
+
+### Tactic 1 close — initial-access (2026-08-10)
+
+**The entry technique varies; the blast radius does not.** T1190 exploits the code, T1078.004
+authenticates as the workload, T1195.002 arrives inside software installed on purpose — three
+unrelated doors, and in all three the size of the incident is set by the same thing: what the
+compromised identity was permitted to reach. Entry techniques are numerous, cheap and partly
+outside the architect's control. The privilege scope behind the door is one decision, made once,
+in a template the architect owns. **You cannot spend your way to a reliable front door.**
+
+**Mitigation count collapses as the compromise moves away from your own code.** T1190 offers a
+rich preventive set; T1078.004 offers seven, of which three (M1032, M1017, M1027) are noise for
+a machine identity; T1195.002 offers two — and one of them, M1051 Update Software, is the
+*delivery vehicle* in the SolarWinds and M.E.Doc procedures. The further left the compromise
+happens, the fewer controls you own, which is an argument for spending architecture effort where
+control still exists.
+
+**Taught:** T1190, T1078.004, T1195.002. **Named and skipped, with reasons:** T1133 and T1669
+(network appliances), T1189 and T1566 (target staff, not the application), T1091 and T1200
+(physical access), T1659, T1199 (folded into T1078.004 — the partner-pipeline scenario is the
+same problem with a credential attached).
 
 ---
 
