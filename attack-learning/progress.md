@@ -85,6 +85,11 @@ The fix is a bold heading on every section, no tables, and no closing flourish.
 - **Every technique, mitigation and tactic ID is written with its name, every single time** —
   "T1505.003 Web Shell", not "T1505.003". Raised 2026-08-10: bare IDs are unresolvable references
   that quietly demand the recall these lessons promise never to test.
+- **Answers are marked plainly, with no softening.** Instructed 2026-08-10: *"I don't like this
+  kindness when you say that is the answer most people have. I don't need this compassion when I
+  failed."* No "that's a common mistake", no normalising a wrong answer, no reassurance about
+  progress or readiness, no softener before a correction. Stating what an answer got right stays
+  — that is information. Stating that other people get it wrong too is not.
 
 Rules live in `.claude/skills/attack-tutor/SKILL.md`. Assessment questions are built by the
 `attack-examiner` agent.
