@@ -89,8 +89,8 @@ and the one closest to the user's own surface.
 | # | Tactic | In scope | Status |
 |---|---|---|---|
 | 1 | TA0001 initial-access | 22 | **done** 2026-08-10 |
-| 2 | TA0006 credential-access | 65 | **next** |
-| 3 | TA0003 persistence | 109 | not started |
+| 2 | TA0006 credential-access | 65 | **done** 2026-08-10 |
+| 3 | TA0003 persistence | 109 | **next** |
 | 4 | TA0004 privilege-escalation | 96 | not started |
 | 5 | TA0007 discovery | 49 | not started |
 | 6 | TA0009 collection | 37 | not started |
@@ -108,6 +108,9 @@ with the reason it is skipped**, so a subset is never mistaken for the whole.
 
 Initial access (done): T1190, T1078.004 Cloud Accounts, T1195.002 Compromise Software Supply
 Chain.
+
+Credential access (done): T1552.001 Credentials In Files, T1528 Steal Application Access Token,
+T1555.006 Cloud Secrets Management Stores.
 
 **Not in the table:** reconnaissance (TA0043) and resource-development (TA0042). Both are
 `PRE`-platform, carry M1056 Pre-compromise — ATT&CK's marker for "no preventive control exists" —
@@ -131,6 +134,7 @@ checked and answered well.
 | T1195.002 Compromise Software Supply Chain | initial-access | 2026-08-10 | **solid** |
 | T1552.001 Credentials In Files | credential-access | 2026-08-10 | **shaky** |
 | T1528 Steal Application Access Token | credential-access | 2026-08-10 | **solid** |
+| T1555.006 Cloud Secrets Management Stores | credential-access | 2026-08-10 | **solid** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -193,6 +197,60 @@ a delegated user flow. Rotation is also incomplete on its own: an app registrati
 several secrets and certificates, so enumerate every credential on it — an attacker-added one
 (**T1098.001 Additional Cloud Credentials**) survives rotating yours, and is the most common
 reason a "contained" identity incident is not.
+
+**Key Vault: control-plane privilege converts into data-plane secrets** (2026-08-10, from
+T1555.006). "Who can read our secrets" is answered by the access list **plus everyone who can
+modify it**. Under the legacy access-policy permission model, `Microsoft.KeyVault/vaults/write`
+— which resource-group **Contributor** holds — lets someone add an access policy granting
+themselves data-plane read. Under the Azure RBAC permission model that path closes, since
+granting a role needs `Microsoft.Authorization/roleAssignments/write`, which Contributor lacks
+and **Owner** / **User Access Administrator** have. Two qualifiers that decide whether it holds
+in practice: **RBAC inherits downward**, so Owner or UAA at subscription or management-group
+scope flows onto the vault regardless of permission model; and **the permission model is itself
+a control-plane setting**, so anyone who can write to the vault can switch it back — "we use
+RBAC" is current configuration, not a durable property, without Azure Policy or a deny
+assignment. Contributor also retains vault deletion and **diagnostic-settings modification**,
+the control-plane route to disabling the audit log.
+
+**The escalation is logged by default and the theft is not** (2026-08-10, from T1555.006).
+`Microsoft.KeyVault/vaults/write` lands in the Azure Activity Log with no configuration;
+`SecretGet` needs a diagnostic setting routing Key Vault AuditEvent to a workspace, and that is
+**off by default**. ATT&CK's only analytic for this technique is AWS CloudTrail — no Azure
+detection at all, for a technique whose own definition names Azure Key Vault. **One mitigation
+exists (M1026)**, which is ATT&CK stating that the entire defence is who holds privilege. What
+does *not* apply and gets specified anyway: private endpoints and vault firewalls (the attacker
+is executing inside the network as the workload), encryption of contents (the vault decrypts for
+authorised callers by design), and soft-delete/purge protection (recovery controls — they
+address destruction, not disclosure).
+
+### Tactic 2 close — credential-access (2026-08-10)
+
+**Nothing was broken in any of the three.** The file read was permitted, the token was validly
+issued, the vault request was authorised and correctly answered. That is the structural
+difference from initial access: those techniques defeat a barrier, these use an **authorised
+position**. Hence the thin mitigation counts — four, four, one — and hence M1047 Audit being the
+closest thing to a shared control, which is the weakest kind.
+
+**The ladder relocates the credential, it does not remove it.** Config file (T1552.001) →
+metadata endpoint via managed identity (T1552.005) → Key Vault fetched by that identity
+(T1555.006). Every rung is a real improvement against *leakage*; no rung changes what an
+attacker holding the application's execution context can retrieve.
+
+**The control doing the most work is not an M-number** — no mitigation spans all three. It is a
+design property: **shrink what one compromised execution context can retrieve.** A vault per
+application rather than per environment; a service account scoped to one namespace; a token
+whose audience cannot be replayed elsewhere. Not preventing the retrieval — deciding how much a
+single successful one returns.
+
+**The tactic's output is the previous tactic's input.** Everything acquired here is spent as
+T1078. Credential access and initial access are one loop, re-run against each new environment.
+
+**Taught:** T1552.001, T1528, T1555.006. **Named and skipped, with reasons:** T1003 and T1558
+(endpoint memory, NTDS, Active Directory internals); T1110 Brute Force — highest usage in the
+tactic at 17 groups and skipped anyway, because its controls are identity-provider configuration
+rather than an application design decision; T1040 and T1557 (network layer); T1056, T1111, T1621
+(target a human at a keyboard); T1539 Steal Web Session Cookie — the closest call and the one to
+add if a fourth is ever wanted; T1552.004 Private Keys, folded in as a callback.
 
 ### Tactic 1 close — initial-access (2026-08-10)
 
