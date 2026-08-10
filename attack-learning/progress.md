@@ -15,23 +15,39 @@ freely.
 
 **Security architect working in application security** — designing security solutions and
 controls into application projects. Learning ATT&CK to justify controls, specify telemetry, and
-pressure-test designs.
+pressure-test designs. **Not** a detection engineer or SOC analyst.
 
-**Not** a detection engineer or SOC analyst, and **not responsible for platform or
-infrastructure security.**
+### Scope changed 2026-08-10: on-premises foundation first
+
+The user asked to **restart on standard on-premises environments**: *"I don't want to go in
+modern environments like containers or cloud for beginners learning. I will do it after the
+foundation is done."* They were told that general on-prem means teaching infrastructure security
+— domain controllers, Active Directory internals, endpoint tradecraft — which the earlier remit
+excluded. **They chose the broad scope with that known.** Settled; do not reopen.
 
 | | |
 |---|---|
-| **In scope** | The application and its exposed surface; its identity (managed identity, app registration, service principal, workload identity); its secrets and how it gets them; its data stores and whether the app mediates access to them; its container and orchestrator; its build pipeline and dependencies; its OAuth and token surface; its egress |
-| **Out of scope** | Domain controllers and Active Directory internals, AD FS and AD CS, Exchange and mailboxes, VPN and network appliances, endpoint and workstation tradecraft, host forensics |
+| **In scope** | Windows and Linux servers and workstations; Active Directory — domain controllers, Kerberos, delegation, group policy, certificate services; on-prem application servers (IIS, Tomcat, Apache) and their databases; file shares; local and domain accounts and credential stores; endpoint execution, host persistence, host forensics; the internal network |
+| **Deferred, not excluded** | Cloud (Azure/AWS/GCP), Entra ID, containers and orchestrators, SaaS, CI/CD pipelines — returned to once the foundation is done |
 
-**Stack:** Cloud (IaaS/SaaS), Identity Provider, Containers, Linux/Windows servers.
-581 of 697 Enterprise techniques are in scope for those platforms.
+**Stack:** Linux and Windows, on-premises. **507 of 697 Enterprise techniques** are in scope
+(176 top-level). Query with `--platforms Linux,Windows` — the script's default is still the old
+cloud-inclusive scope.
 
-**Cloud reference: Azure.** Entra ID, subscriptions and management groups, managed identities,
-Azure RBAC, Key Vault, App Service, AKS, Storage accounts, Microsoft 365 — never AWS or GCP.
-ATT&CK's own data is AWS-weighted, so the tutor translates AWS log sources to their Azure
-equivalents **and says when it is translating**.
+**Illustrate with plain on-prem infrastructure**: a Windows domain, a member server running IIS
+or Tomcat, SQL Server, an SMB file share, a Linux application host, a service account in Active
+Directory. No Azure, AWS, Kubernetes or SaaS examples while the foundation is running — only
+brief callbacks to the cloud techniques already taught.
+
+**Telemetry honesty for on-prem:** ATT&CK's analytics lean on `WinEventLog:Security`,
+`WinEventLog:Sysmon`, `auditd:SYSCALL` and `NSM:Flow`. **Sysmon is not installed by default**,
+auditd rules must be written, Windows command-line process auditing is off by default, and
+PowerShell script block logging must be enabled by policy. Where ATT&CK names one of these, say
+the evidence does not exist unless someone deployed it.
+
+**The job did not change, only the scope.** Still end every technique at a design decision, and
+where an infrastructure technique has an application consequence — the service account the app
+runs as, an app server's file permissions, a database the app owns — lead with that.
 
 ---
 
@@ -80,40 +96,47 @@ Rules live in `.claude/skills/attack-tutor/SKILL.md`. Assessment questions are b
 Walking the 13 tactics one at a time — what the adversary is trying to achieve at that stage,
 then the application-layer techniques that matter within it.
 
-Chosen over the alternatives for a reason worth recording: **the usage-ranked curriculum is a
-bad fit for this user.** The top techniques by real-world adversary usage are PowerShell,
-malicious file attachments, Windows Command Shell and spearphishing — endpoint and workstation
-material. Of the top twelve, only T1190 is squarely application security. Ranking by popularity
-would spend most of the time on another team's job.
+**Restarted at initial-access on 2026-08-10** with the on-prem scope. Counts below are
+`--platforms Linux,Windows`.
 
-Order below is not ID order. It follows the attack lifecycle but opens with the smallest tactic
-and the one closest to the user's own surface.
+**The argument against a usage-ranked curriculum no longer holds, and that is worth recording.**
+It was rejected in the cloud scope because the top techniques by adversary usage — PowerShell,
+malicious file attachments, Windows Command Shell, spearphishing — were endpoint and workstation
+material, i.e. another team's job. Under the on-prem scope **all of them are in scope**, so the
+tactic tour now naturally arrives at the most-used techniques in the framework rather than
+avoiding them. The tour is kept because walking by adversary goal still teaches structure that a
+ranked list does not.
+
+Order follows the attack lifecycle. It differs from the cloud order: **execution and lateral
+movement move up sharply**, because on-prem they carry the classic intrusion story that cloud
+identity attacks skip entirely.
 
 | # | Tactic | In scope | Status |
 |---|---|---|---|
-| 1 | TA0001 initial-access | 22 | **done** 2026-08-10 |
-| 2 | TA0006 credential-access | 65 | **done** 2026-08-10 |
-| 3 | TA0003 persistence | 109 | **next** |
-| 4 | TA0004 privilege-escalation | 96 | not started |
-| 5 | TA0007 discovery | 49 | not started |
-| 6 | TA0009 collection | 37 | not started |
-| 7 | TA0010 exfiltration | 19 | not started |
-| 8 | TA0040 impact | 33 | not started |
-| 9 | TA0112 defense-impairment | 46 | not started |
-| 10 | TA0008 lateral-movement | 23 | not started |
-| 11 | TA0002 execution | 61 | not started |
-| 12 | TA0011 command-and-control | 45 | not started |
-| 13 | TA0005 stealth | 146 | not started |
+| 1 | TA0001 initial-access | 21 | **next** |
+| 2 | TA0002 execution | 48 | not started |
+| 3 | TA0003 persistence | 91 | not started |
+| 4 | TA0004 privilege-escalation | 79 | not started |
+| 5 | TA0006 credential-access | 58 | not started |
+| 6 | TA0007 discovery | 42 | not started |
+| 7 | TA0008 lateral-movement | 19 | not started |
+| 8 | TA0009 collection | 32 | not started |
+| 9 | TA0011 command-and-control | 45 | not started |
+| 10 | TA0010 exfiltration | 17 | not started |
+| 11 | TA0040 impact | 30 | not started |
+| 12 | TA0112 defense-impairment | 34 | not started |
+| 13 | TA0005 stealth | 141 | not started |
 
 **Three techniques per tactic**, chosen by where you have architectural decisions rather than by
 usage count — depth over breadth. Every other technique in the tactic is **named in the opener
 with the reason it is skipped**, so a subset is never mistaken for the whole.
 
-Initial access (done): T1190, T1078.004 Cloud Accounts, T1195.002 Compromise Software Supply
-Chain.
-
-Credential access (done): T1552.001 Credentials In Files, T1528 Steal Application Access Token,
-T1555.006 Cloud Secrets Management Stores.
+**Cloud track, completed 2026-08-10 before the scope change** — kept for the return trip, not
+repeated: initial-access (T1190 Exploit Public-Facing Application, T1078.004 Cloud Accounts,
+T1195.002 Compromise Software Supply Chain); credential-access (T1552.001 Credentials In Files,
+T1528 Steal Application Access Token, T1555.006 Cloud Secrets Management Stores); persistence,
+partial (T1505.003 Web Shell, T1098.001 Additional Cloud Credentials, T1098.006 Additional
+Container Cluster Roles — taught, never checked).
 
 **Not in the table:** reconnaissance (TA0043) and resource-development (TA0042). Both are
 `PRE`-platform, carry M1056 Pre-compromise — ATT&CK's marker for "no preventive control exists" —
@@ -140,6 +163,11 @@ checked and answered well.
 | T1555.006 Cloud Secrets Management Stores | credential-access | 2026-08-10 | **solid** |
 | T1505.003 Web Shell | persistence | 2026-08-10 | **solid** |
 | T1098.001 Additional Cloud Credentials | persistence | 2026-08-10 | **shaky** |
+| T1098.006 Additional Container Cluster Roles | persistence | 2026-08-10 | untested |
+
+Everything above is the **cloud track**, taught before the 2026-08-10 scope change. It stays on
+the record and is not re-taught; the on-prem rows start below as the tour restarts at
+initial-access.
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service

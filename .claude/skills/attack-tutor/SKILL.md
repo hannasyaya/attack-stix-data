@@ -44,53 +44,53 @@ output. Both return synthesised results, never data dumps:
 | `attack-researcher` | sweeps across many techniques, groups or mitigations — comparisons, coverage questions, threat-actor profiles |
 | `attack-examiner` | building assessment questions grounded in many techniques at once — diagnostics and cumulative review |
 
-**The user's default stack** — cloud (IaaS/SaaS), identity providers, containers, and
-Linux/Windows servers — is already the script's default scope. That is 581 of 697 techniques.
-Only pass `--platforms` when the user asks about something narrower or wider.
+**The user's stack is now on-premises Windows and Linux.** The script's *default* scope is
+still the old cloud-inclusive one, so **pass `--platforms Linux,Windows` explicitly** on every
+`tactic` and `scope` query. That is 507 of 697 techniques, 176 top-level. Only widen when the
+user asks.
 
-## The user does application security
+## Scope: traditional on-premises, foundation first
 
-They design security into **application projects**. Platform and infrastructure security belongs
-to other teams, and material from that world is not useful to them — they said so directly after
-a chain ended in Exchange mailboxes.
+**Changed 2026-08-10 at the user's explicit direction**, after they said: *"let's focus on
+standard onprem environment. I don't want to go in modern environments like containers or cloud
+for beginners learning. I will do it after the foundation is done."* They were shown that
+general on-prem means teaching infrastructure security — domain controllers, Active Directory
+internals, endpoint tradecraft — which their earlier remit excluded, and they chose the broad
+scope anyway. Do not re-litigate it.
 
-**In scope:** the application and its exposed surface; its identity (managed identity, app
-registration, service principal, workload identity); its secrets and how it gets them; its data
-stores and whether the app mediates access to them; its container and orchestrator; its build
-pipeline and dependencies; its OAuth and token surface; its egress.
+**In scope now:** Windows and Linux servers and workstations; Active Directory — domain
+controllers, Kerberos, delegation, group policy, certificate services; on-premises application
+servers (IIS, Tomcat, Apache) and their databases; file shares; local and domain accounts and
+credential stores; endpoint execution, host persistence and host forensics; the internal
+network.
 
-**Out of scope unless asked:** domain controllers and Active Directory internals, AD FS and
-AD CS, Exchange and mailbox techniques, VPN and network appliances, endpoint and workstation
-tradecraft, host forensics and anti-forensics.
+**Deferred, not excluded:** cloud (Azure, AWS, GCP), Entra ID, containers and orchestrators,
+SaaS, CI/CD pipelines. The user intends to return to these once the on-prem foundation is done.
+When a technique's on-prem form has a cloud counterpart already taught, a one-line callback is
+useful; a full cloud lesson is not.
 
-Platform scope is not the same as this. `--platforms Windows` still returns domain-controller
-techniques; the filter above is editorial and you apply it when choosing what to teach. When a
-derived chain contains an infrastructure-owned technique, say in one line what it is and why it
-is someone else's problem, then move on — do not teach it in full.
+**Default platform filter is now `--platforms Linux,Windows`** — 507 techniques, 176 top-level.
+Pass it explicitly on every `tactic` and `scope` query. Only widen when the user asks.
 
-**Prefer actors whose technique sets sit in the application layer** when picking a chain.
-Ranked by application-layer coverage in the current data: **TeamTNT** (containers and
-workloads), **Storm-0501** (cloud application to storage), **SolarWinds Compromise** (CI/CD and
-build pipeline), then Scattered Spider and APT41.
+**The user is still an application security architect by trade.** The scope widened; the job did
+not. Keep ending at a design decision, and where an infrastructure technique has an application
+consequence — a service account the app runs as, an app server's file permissions, a database
+the app owns — lead with that consequence.
 
-## Cloud reference: Azure
+## Illustrating examples
 
-**The user works in Azure.** Every cloud example, scenario and control recommendation uses
-Azure and Microsoft services — Entra ID, subscriptions and management groups, managed
-identities, Azure RBAC, Key Vault, App Service, AKS, Storage accounts, Microsoft 365.
+Use **plain on-premises infrastructure**: a Windows domain, a member server running IIS or
+Tomcat, SQL Server, an SMB file share, a Linux application host, a service account in Active
+Directory. Concrete and named, never generic.
 
-Never illustrate with AWS or GCP unless the user asks about them specifically, or the technique
-is genuinely AWS-only.
+Do not illustrate with Azure, AWS, GCP, Kubernetes or SaaS while the on-prem foundation is
+running, except as a brief callback to something already taught.
 
-**Important honesty rule.** ATT&CK's underlying data is AWS-weighted: `AWS:CloudTrail` appears
-in 142 analytics, against 35 for `azure:signinlogs`, 13 for `azure:audit` and 9 for
-`azure:activity`. So the script will often hand you an AWS log source for a technique that
-applies equally to Azure.
-
-When that happens, give the Azure equivalent **and say you are translating** — "ATT&CK names
-CloudTrail here; the Azure equivalent is the subscription Activity Log". Never silently
-rewrite an AWS log source into an Azure one as though ATT&CK had named it, and never invent an
-Azure log source. The translation table is in `references/stack-map.md`.
+**Honesty rule on log sources, unchanged in spirit.** ATT&CK's analytics for on-prem lean on
+`WinEventLog:Security`, `WinEventLog:Sysmon`, `auditd:SYSCALL` and `NSM:Flow`. Sysmon is **not
+installed by default** and auditd rules must be written — so "ATT&CK names a Sysmon event"
+frequently means "this is invisible unless someone deployed and configured Sysmon". Say that
+plainly rather than implying the telemetry exists. Never invent a log source or an event ID.
 
 ## The teaching contract: the whole technique, one message
 
@@ -99,7 +99,7 @@ turns, never send a "part 2", never compress two techniques into one message.
 
 1. **What it is** — verbatim MITRE quote, plain language, then the **boundary**
 2. **Why the adversary does it** — the goal it serves
-3. **On your stack** — one concrete Azure scenario
+3. **On your stack** — one concrete on-premises scenario
 4. **What real groups did** — the procedure evidence
 5. **What stops it** — mitigations as design requirements
 6. **What reveals it** — the telemetry decisions the user owns
@@ -132,8 +132,8 @@ So the fix is structure, not subtraction:
 
 **The verbatim quote is mandatory.** Take it from the `DESCRIPTION` block of `attack.py
 technique <ID>`. Quote the definitional sentences and **stop before the examples**. Never
-paraphrase inside the quote, never trim mid-sentence, never substitute Azure terms into MITRE's
-text, and **never write a quote from memory** — that has already produced one misquote. The user
+paraphrase inside the quote, never trim mid-sentence, never substitute your own terms into
+MITRE's text, and **never write a quote from memory** — that has already produced one misquote. The user
 cites this in design documents: the quote is the citation, the rewrite is the teaching.
 
 Then the plain-language rewrite, then the **boundary**.
@@ -154,8 +154,9 @@ rather than guessing at them.
 or more tactics, say what that structurally means — a technique under four tactics is usually
 telling you it is a *state* the adversary reaches, not a step they take.
 
-**On your stack** is one concrete Azure scenario with named services. One worked example beats
-three abstract ones.
+**On your stack** is one concrete on-premises scenario with named systems — a domain member
+server running IIS, a SQL Server host, an SMB share, a Linux application host, a service account
+in Active Directory. One worked example beats three abstract ones.
 
 ### Section 4 — What real groups did
 
@@ -207,12 +208,14 @@ definition, the procedures and the controls together. Rules in "The check questi
 Surface **one or two** in section 6. All four together belong in the marking reply, and only
 when the answer calls for it. These are the decisions the user owns and cannot revisit later:
 
-- **Can this event be produced at all?** Licence tier, default-off settings, agent required.
-  `MailItemsAccessed`, Azure blob data-plane logging, Microsoft Graph Activity Logs and Windows
-  process-creation auditing are all off or unavailable by default — build-time decisions with a
-  cost.
-- **Is it retained longer than this adversary's dwell time?** Entra ID audit and Azure Activity
-  Log default to 90 days; Volt Typhoon operated for years. You cannot buy last year's logs.
+- **Can this event be produced at all?** Agent required, default-off setting, or licence tier.
+  **Sysmon is not installed by default**, auditd rules must be written, Windows command-line
+  process auditing is off by default, and PowerShell script block logging must be enabled by
+  policy. When ATT&CK names one of these, say plainly that the evidence does not exist unless
+  someone deployed it — a build-time decision with a cost.
+- **Is it retained longer than this adversary's dwell time?** Default Windows Security log sizes
+  roll over in days on a busy server; Volt Typhoon operated for years. You cannot buy last
+  year's logs.
 - **Can the party being audited disable the audit?** A pure RBAC boundary question (T1685.002).
 - **Who can read it?** The telemetry platform is a map of the organisation (T1654), so read
   access is a confidentiality decision like any other data store.
