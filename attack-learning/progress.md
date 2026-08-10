@@ -329,6 +329,31 @@ or a simple login with a stolen administrator credential, none of which MFA on t
 because that already succeeded. Fix: administrative access originates from a separate dedicated
 path, so the jump host is not reachable from the ordinary remote-user network at all.
 
+**Separate accounts stop credential reuse, not credential capture** (2026-08-10, from the user
+pushing back twice on the jump-host scenario — correctly). Using a distinct admin account for the
+jump host does defeat the simplest path: the compromised user account has no rights on it. Two
+things survive. **The login surface stays exposed** to every VPN session — password spraying,
+credential stuffing and pre-authentication vulnerabilities in RDP or SSH care nothing about which
+accounts exist; a service reachable by 400 remote users differs from one reachable by 12 admin
+workstations under identical account controls. **And both accounts are used from one device**, so
+the admin credential is typed on a machine that reads email — captured by keylogging, or the
+session ridden via **T1134 Access Token Manipulation**.
+
+**The separate-workstation requirement is tier 0 only, and the user was right to push back on it**
+(2026-08-10). Two machines per administrator is not proportionate for ordinary server
+administration. For tier 1 the requirement is narrower — *the admin credential must not be
+replayable by whoever captured it* — and three controls deliver that without a second device:
+**hardware-bound credentials** (smart card or FIDO2; keylogging yields nothing), **Restricted
+Admin / Remote Credential Guard for RDP** plus Credential Guard on the workstation (no reusable
+material sent to or left on the target), and **just-in-time privilege** with check-out and
+rotation on release (a captured credential expires in minutes). What none of them closes is
+**session hijack** — hardware credentials stop capture, not an attacker riding the authenticated
+session. That residual is the only thing a separate machine buys, which is why it is reserved for
+the tier where the residual is unacceptable. For tier 1, accepting it with hardware credentials
+and just-in-time privilege in place is a defensible decision — documented as a risk acceptance,
+not a gap. **The firewall rule remains free either way**: making the jump host reachable only
+from an admin segment costs no hardware, no product and no user friction.
+
 **This is the same conversion shape, now seen four times** (2026-08-10). Key Vault control plane
 → data plane; Microsoft Graph directory permission → Azure resource permission; Azure role →
 Kubernetes cluster-admin; network segment → full reach via a permitted intermediary. **Privilege
