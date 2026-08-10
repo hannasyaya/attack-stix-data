@@ -312,6 +312,25 @@ account barred from user workstations by enforcement rather than convention, and
 performed from a Privileged Access Workstation with no route from the user network to the
 servers. Most organisations have the first, believe they have the second, lack the third.
 
+**Segmentation is transitive; firewall rules are not** (2026-08-10, from the T1133 External
+Remote Services revision check). A VPN segment permitted to reach exactly two destinations —
+a file server and the administrators' jump host — is not limited to two things. Its real reach is
+the file server **plus everything the jump host reaches**, one hop later. The metric is never
+"how many destinations does this segment touch" but **"what is the transitive reach of those
+destinations"**, which almost nobody computes; jump hosts, monitoring servers and backup servers
+are the three machines that quietly undo most network designs. The rule also exposes the jump
+host's **login surface** to every VPN session — password spraying, an exploit against RDP or SSH,
+or a simple login with a stolen administrator credential, none of which MFA on the VPN affects,
+because that already succeeded. Fix: administrative access originates from a separate dedicated
+path, so the jump host is not reachable from the ordinary remote-user network at all.
+
+**This is the same conversion shape, now seen four times** (2026-08-10). Key Vault control plane
+→ data plane; Microsoft Graph directory permission → Azure resource permission; Azure role →
+Kubernetes cluster-admin; network segment → full reach via a permitted intermediary. **Privilege
+and reach convert through whatever sits between.** The recurring review question: *can this
+identity, or this segment, become one that has what it lacks?* This is the idea to retest — more
+than any individual technique.
+
 **Front-door controls versus what the session reaches** (2026-08-10, from T1133 External Remote
 Services). The check asked what MFA and patching do not answer. The answers given — is the
 MFA-exempt account list revoked (correct and sharp; it is exactly Akira's model), and can access
