@@ -193,8 +193,11 @@ checked and answered well.
 | T1098.006 Additional Container Cluster Roles | persistence | 2026-08-10 | untested |
 
 Everything above is the **cloud track**, taught before the 2026-08-10 scope change. It stays on
-the record and is not re-taught; the on-prem rows start below as the tour restarts at
-initial-access.
+the record and is not re-taught. **On-prem track from here:**
+
+| Technique | Tactic | Taught | Status |
+|---|---|---|---|
+| T1566.001 Spearphishing Attachment | initial-access | 2026-08-10 | **solid** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -282,6 +285,40 @@ does *not* apply and gets specified anyway: private endpoints and vault firewall
 is executing inside the network as the workload), encryption of contents (the vault decrypts for
 authorised callers by design), and soft-delete/purge protection (recovery controls — they
 address destruction, not disclosure).
+
+### On-prem track
+
+**Evaluate a control by what it does after the assumption it depends on has failed**
+(2026-08-10, from T1566.001 Spearphishing Attachment). Of that technique's seven mitigations,
+**M1017 User Training** depends on vigilance, **M1031 Network Intrusion Prevention** and the mail
+gateway depend on the file being scannable, **M1049 Antivirus/Antimalware** depends on the
+payload being known — and the procedures document each being defeated on purpose (APT-C-36 used
+"password protected RAR attachments to avoid being detected by the email gateway"). **M1018 User
+Account Management** is the only one that acts *after* the phish succeeds. It depends on nothing.
+
+**Privilege separation is per account, not per person** (2026-08-10). "Only admins have admin
+rights" is circular. The form that works: domain administrators hold a **second** account for
+administration which never receives email or browses the web, and administration happens from a
+separate workstation. The catastrophic case for T1566.001 Spearphishing Attachment is not the
+finance clerk — it is a domain administrator opening an attachment on the account they
+administer with, which is a full domain compromise in one step. Second, separate decision: what
+an ordinary domain account can *reach* — file shares, internal applications, databases that
+trust a domain login. Capping privilege and capping reach are different controls.
+
+**One email, three techniques, three owners** (2026-08-10). **T1566.001 Spearphishing
+Attachment** is delivery (initial-access); **T1204.002 Malicious File** is the person opening it
+(execution); **T1203 Exploitation for Client Execution** is the file exploiting the reader
+instead of asking for cooperation. Review consequence: if the payload needs macros enabled, the
+macro policy is a control; if it exploits the PDF parser, it is not and patching is.
+
+**Sysmon is not installed by default** (2026-08-10). The signal for T1566.001 Spearphishing
+Attachment is not the email but the mail client's child process — Word or Outlook spawning a
+command interpreter. ATT&CK's analytics lean on `WinEventLog:Sysmon`, which is a deployment
+somebody must fund, and Windows' built-in process-creation auditing with command lines is off
+until enabled by policy. **The evidence for the most-used technique in the framework does not
+exist on a stock Windows estate.**
+
+### Cloud track
 
 **Azure has two permission systems and privilege converts between them** (2026-08-10, from
 T1098.001 Additional Cloud Credentials). **Azure RBAC** governs resources — subscriptions,
