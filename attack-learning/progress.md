@@ -129,6 +129,7 @@ checked and answered well.
 | T1190 Exploit Public-Facing Application | initial-access | 2026-08-03 | **solid** |
 | T1078.004 Cloud Accounts | initial-access | 2026-08-10 | **shaky** |
 | T1195.002 Compromise Software Supply Chain | initial-access | 2026-08-10 | **solid** |
+| T1552.001 Credentials In Files | credential-access | 2026-08-10 | **shaky** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -162,6 +163,23 @@ APT41); effective against repackaged or lookalike artifacts (Moonstone Sleet's t
 GOLD SOUTHFIELD's backdoored installers from a compromised download site). Specify the control,
 knowing which half it covers. Phrasing for the room: *"signing gives us provenance and
 tamper-evidence after the fact — no assurance about the vendor's build environment."*
+
+**A managed identity is a permission the execution context carries, not a secret the application
+knows** (2026-08-10, from T1552.001). Moving a connection string from a config file into Key
+Vault removes the *standing artefact* — nothing left in an image layer, repo, backup or pipeline
+log — and that is a real win against leakage. It does not restrict the secret from the
+application's own context: any code executing as the workload can request a token from the
+metadata endpoint and spend it at the vault, because the request is indistinguishable from the
+application's own. The technique moves (T1552.001 → T1552.005 + T1555.006); the reachability
+does not. **Against leakage, transformative. Against compromise of the application, unchanged.**
+What the move genuinely adds is visibility — Key Vault records the secret retrieval as a
+data-plane operation, and that logging is **off by default**.
+
+**The recurring failure mode: assuming a control's boundary sits tighter than it does**
+(2026-08-10). Twice in three techniques — MFA imagined to cover a machine identity (T1078.004),
+a managed identity imagined to restrict access from the app's own context (T1552.001). The
+correcting question for any specified control: *what is on the inside of its boundary?* That is
+where the attacker is standing.
 
 ### Tactic 1 close — initial-access (2026-08-10)
 
