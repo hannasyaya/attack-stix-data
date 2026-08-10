@@ -138,6 +138,7 @@ checked and answered well.
 | T1552.001 Credentials In Files | credential-access | 2026-08-10 | **shaky** |
 | T1528 Steal Application Access Token | credential-access | 2026-08-10 | **solid** |
 | T1555.006 Cloud Secrets Management Stores | credential-access | 2026-08-10 | **solid** |
+| T1505.003 Web Shell | persistence | 2026-08-10 | **solid** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -225,6 +226,49 @@ does *not* apply and gets specified anyway: private endpoints and vault firewall
 is executing inside the network as the workload), encryption of contents (the vault decrypts for
 authorised callers by design), and soft-delete/purge protection (recovery controls — they
 address destruction, not disclosure).
+
+**A deployment is not a remediation** (2026-08-10, from T1505.003 Web Shell). Pipelines converge
+the target toward a declared desired state; they do not remove what nobody declared. Azure App
+Service zip deploy **overlays** the package onto `/home/site/wwwroot` and leaves unlisted files
+alone by default, and `/home` is persistent storage that survives restarts, scaling and instance
+replacement. So a web shell written to the runtime filesystem is never redeployed — it is simply
+never deleted. Distinguish this from a shell that reached the build artifact, which is
+**T1195.002 Compromise Software Supply Chain** and needs different controls. The strongest fix is
+`WEBSITE_RUN_FROM_PACKAGE=1`: the app runs from a mounted package, `wwwroot` becomes read-only,
+there is no writable served directory, and every deploy is a real replacement. Container
+equivalent: a read-only root filesystem.
+
+**Choosing a managed service transfers the layers, not the risk** (2026-08-10, from T1505.003
+Web Shell, raised by the user asking why App Service security is theirs at all). PaaS genuinely
+removes kernel patching, host hardening, container escape and OS-level file permissions from the
+architect's remit — a real reduction, worth claiming. What remains is almost entirely design-time
+configuration nobody else in the delivery chain is positioned to decide: whether the served
+directory is writable, where uploads land, which runtime handlers exist, whether HTTP logs are
+routed anywhere. A web shell in `wwwroot` is *deployment content* — Microsoft will never flag or
+remove it, because it is indistinguishable from the application.
+
+**A web application firewall acts at the entry, not at the shell** (2026-08-10). It may well
+catch the request that *plants* a shell — that is **T1190 Exploit Public-Facing Application** —
+and has real value there. It is structurally blind to *use* of the shell, because a WAF is a
+pattern matcher over request content, not an authorization layer over the URL space: it holds no
+inventory of which URLs legitimately exist, the command usually travels in a POST body, cookie
+or custom header, and the response is plain text rather than attack grammar. Commodity shells
+have signatures; obfuscated and custom ones do not.
+
+**A web shell is the opposite of a reverse shell** (2026-08-10). Reverse shell = the host dials
+outbound, so egress filtering is the control. Web shell = the attacker connects **inbound** over
+the HTTPS listener you already publish, so no outbound connection exists and egress control sees
+nothing. They combine: shells are used to launch follow-on **T1090 Proxy** / **T1572 Protocol
+Tunneling** / **T1071.001 Web Protocols** channels — reGeorg, in four of this technique's
+procedures, is an HTTP tunnel.
+
+**Upload handling, on-prem form of the cloud rule** (2026-08-10). The principle is not "use Blob
+Storage" — it is that **the location written to must not be a location that executes**. On-prem:
+store uploads outside the document root and stream them through application code; if they must
+sit under the root, remove the interpreter handler for that path (**M1042 Disable or Remove
+Feature or Program**); mount the volume `noexec`; run the writing and serving processes as
+different accounts (**M1018 User Account Management**); generate the stored filename yourself and
+validate content by its bytes, never by a client-supplied extension.
 
 ### Tactic 2 close — credential-access (2026-08-10)
 
