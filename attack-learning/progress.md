@@ -127,12 +127,27 @@ checked and answered well.
 | Technique | Tactic | Taught | Status |
 |---|---|---|---|
 | T1190 Exploit Public-Facing Application | initial-access | 2026-08-03 | **solid** |
+| T1078.004 Cloud Accounts | initial-access | 2026-08-10 | **shaky** |
+
+**T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
+not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
+principal is breached, and the answer was that the attacker still needs the user's MFA device.
+Retest this, and retest the does-not-apply reasoning generally.
 
 ---
 
 ## Findings
 
-Observations worth keeping, recorded as they come up. Empty at reinitialisation.
+Observations worth keeping, recorded as they come up.
+
+**MFA and Conditional Access do not evaluate workload identity sign-ins** (2026-08-10, from
+T1078.004). A service principal authenticating by client secret or certificate uses the OAuth
+client-credentials flow: no user, no prompt, no device, so an MFA policy evaluates to
+not-applicable rather than to deny. Entra has Conditional Access for workload identities, but it
+is a separate premium licence and supports only location and risk conditions — there is no
+second factor a machine can present. *"We require MFA"* is therefore a statement about a subset
+of the authentication surface, and the subset excludes every machine identity in the tenant.
+**Naming the inapplicable control is the design-review move** — it is usually news in the room.
 
 ---
 
