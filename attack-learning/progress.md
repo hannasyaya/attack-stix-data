@@ -37,21 +37,27 @@ equivalents **and says when it is translating**.
 
 ## How lessons work
 
-**Four messages per technique, one per chunk.** Chunks are never merged — bundling them caps
-every chunk at ~100 words, which is a summary with headings rather than depth.
+**One technique per message, start to finish, ~900 words in seven headed sections:**
 
-1. **Definition** (~250 words) — MITRE's exact wording, plain language, the tactics it spans and
-   why, and **the boundary**: what separates it from the adjacent techniques it gets confused
-   with. Naming the wrong technique in a design review means specifying the wrong control.
-2. **Procedure** (~300 words) — four or five real named groups and what each actually did,
-   quoted not summarised, then the pattern across them.
-3. **Mitigation** (~350 words) — the design decision in Azure terms, including **at least one
-   mitigation that does not apply and why**. Knowing which controls are inapplicable stops you
-   specifying security theatre.
-4. **Question** (~60 words) — one design-review scenario drawing on all three, then a marking
-   message.
+1. **What it is** — MITRE's exact wording, plain language, then **the boundary**: what separates
+   it from the adjacent techniques it gets confused with. Naming the wrong technique in a design
+   review means specifying the wrong control.
+2. **Why the adversary does it** — the goal it serves.
+3. **On your stack** — one concrete Azure scenario.
+4. **What real groups did** — four or five named groups and what each actually did, quoted not
+   summarised, then the pattern across them.
+5. **What stops it** — mitigations as design requirements, including **at least one that does
+   not apply and why**. Knowing which controls are inapplicable stops you specifying security
+   theatre.
+6. **What reveals it** — one or two of the four telemetry-as-architecture questions.
+7. **Check** — a design-review scenario. Answering it is how a technique moves from `untested`
+   to `solid`.
 
-Four exchanges per technique, twelve per tactic. That is the deliberate trade for depth.
+**Why this shape.** Three shorter formats were tried on 2026-08-03 and all were rejected: a
+250-word card (dropped the procedure evidence), four chunks in one message (~100 words each),
+and four chunks as four messages (fragmented the technique). The original complaint — *"I am
+lost between the beginning and the end"* — was a **navigation** problem, not a length problem.
+The fix is a bold heading on every section, no tables, and no closing flourish.
 
 - **Chunk 2 is never skipped.** A named group and the concrete thing it did is what makes a
   technique arguable in a design review. Reducing it to "13 groups use this" was a failure.
