@@ -118,8 +118,8 @@ identity attacks skip entirely.
 
 | # | Tactic | In scope | Status |
 |---|---|---|---|
-| 1 | TA0001 initial-access | 21 | **next** |
-| 2 | TA0002 execution | 48 | not started |
+| 1 | TA0001 initial-access | 21 | **done** 2026-08-10 |
+| 2 | TA0002 execution | 48 | **next** |
 | 3 | TA0003 persistence | 91 | not started |
 | 4 | TA0004 privilege-escalation | 79 | not started |
 | 5 | TA0006 credential-access | 58 | not started |
@@ -204,6 +204,7 @@ the record and is not re-taught. **On-prem track from here:**
 |---|---|---|---|
 | T1566.001 Spearphishing Attachment | initial-access | 2026-08-10 | **solid** |
 | T1133 External Remote Services | initial-access | 2026-08-10 | **shaky** |
+| T1078.002 Domain Accounts | initial-access | 2026-08-10 | **solid** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -293,6 +294,43 @@ authorised callers by design), and soft-delete/purge protection (recovery contro
 address destruction, not disclosure).
 
 ### On-prem track
+
+### Tactic 1 close — initial-access, on-prem (2026-08-10)
+
+**Three doors, none of them broken.** A person opened an attachment (T1566.001 Spearphishing
+Attachment); a published service accepted a login (T1133 External Remote Services); a valid
+credential authenticated (T1078.002 Domain Accounts). No cryptography defeated, no protocol
+subverted — everything worked as designed.
+
+**MFA splits the tactic in half, and that split is the on-prem lesson.** Decisive at T1133
+External Remote Services — a human at a prompt, and Akira's whole model defeated by it. Nearly
+absent at T1078.002 Domain Accounts — Kerberos and NTLM authentication to a file server has no
+second factor and no prompt. **"We have MFA" is true of the perimeter and false of the
+interior**, and internal credential abuse lives in the interior. Expect to correct that claim.
+
+**No single mitigation spans the three** (7, 5 and 5; M1018 User Account Management covers two,
+M1032 Multi-factor Authentication covers two). What spans them is a property, not a control:
+**the damage is set by what the compromised identity could reach, and from where** — the same
+conclusion the cloud track reached from entirely different data, which is why it is worth
+trusting.
+
+**Taught:** T1566.001 Spearphishing Attachment, T1133 External Remote Services, T1078.002 Domain
+Accounts. **Named and skipped, with reasons:** T1190 Exploit Public-Facing Application (65
+groups, already solid; on-prem it is a server you patch yourself); T1189 Drive-by Compromise
+(browser hardening; T1203 Exploitation for Client Execution teaches the structure better);
+T1199 Trusted Relationship (design lesson duplicated by the partner-pipeline case at T1078.004
+Cloud Accounts); T1195 Supply Chain Compromise (T1195.002 already solid); T1091 Replication
+Through Removable Media and T1200 Hardware Additions (physical presence); T1669 Wi-Fi Networks
+and T1659 Content Injection (network-layer, thin evidence).
+
+**T1078.002 Domain Accounts, from the check:** password length prices the *guessing* attack and
+nobody is guessing — the credential is resident in memory on every server the service runs on,
+read via **T1003.001 LSASS Memory** or reused as a hash without recovering plaintext. Two
+additions to the answer given: the account's security is **the security of the least
+well-protected of the forty servers**, and **annual rotation is a dwell-time control that loses**
+to intrusions running for months. Order the controls — group Managed Service Accounts fix *who
+knows the password* and do not stop memory theft or change privilege; **removing Domain Admins is
+what changes the blast radius.**
 
 **Evaluate a control by what it does after the assumption it depends on has failed**
 (2026-08-10, from T1566.001 Spearphishing Attachment). Of that technique's seven mitigations,
