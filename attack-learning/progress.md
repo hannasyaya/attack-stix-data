@@ -198,6 +198,7 @@ the record and is not re-taught. **On-prem track from here:**
 | Technique | Tactic | Taught | Status |
 |---|---|---|---|
 | T1566.001 Spearphishing Attachment | initial-access | 2026-08-10 | **solid** |
+| T1133 External Remote Services | initial-access | 2026-08-10 | **shaky** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -295,6 +296,34 @@ gateway depend on the file being scannable, **M1049 Antivirus/Antimalware** depe
 payload being known — and the procedures document each being defeated on purpose (APT-C-36 used
 "password protected RAR attachments to avoid being detected by the email gateway"). **M1018 User
 Account Management** is the only one that acts *after* the phish succeeds. It depends on nothing.
+
+**A network boundary stops packets, not credentials** (2026-08-10, raised by the user asking why
+a phished domain administrator matters when there is a boundary between the intranet and the
+server network). Credential material for any account logged into a machine sits in memory on
+that machine — **T1003.001 LSASS Memory** — so the credential comes to the attacker rather than
+the attacker crossing to it. And the boundary already carries an exception for administration:
+if the admin administers servers from that workstation, a rule permits RDP/WinRM/SMB along that
+path, and the attacker uses it as an authorised credential on an authorised route. They need not
+even steal the password — **T1134 Access Token Manipulation** lets them ride the existing logon
+session. **The design-review question is not "is there a boundary?" but "which accounts can log
+into machines on both sides of it?"** Any account that spans the boundary is the tunnel. The
+user's reasoning is correct only under full tiered administration: separate accounts, the admin
+account barred from user workstations by enforcement rather than convention, and administration
+performed from a Privileged Access Workstation with no route from the user network to the
+servers. Most organisations have the first, believe they have the second, lack the third.
+
+**Front-door controls versus what the session reaches** (2026-08-10, from T1133 External Remote
+Services). The check asked what MFA and patching do not answer. The answers given — is the
+MFA-exempt account list revoked (correct and sharp; it is exactly Akira's model), and can access
+be restricted by location (**M1035 Limit Access to Resource Over Network**) — both stay at
+authentication. Missed: **M1030 Network Segmentation**, the only mitigation on that technique
+that changes the outcome *after* authentication succeeds, and the persistence half — Scattered
+Spider used Citrix and VPNs *to persist*, so remote-access credentials must be reset during
+incident remediation or rebuilding hosts ends nothing. Also missed: **M1042 Disable or Remove
+Feature or Program** — you cannot enforce MFA on a service you do not know you publish.
+Terminology note for the on-prem track: *Conditional Access* is an Entra ID product; the
+on-premises equivalents are gateway source-address and geolocation restrictions, network access
+control, or a device certificate requirement.
 
 **Privilege separation is per account, not per person** (2026-08-10). "Only admins have admin
 rights" is circular. The form that works: domain administrators hold a **second** account for
