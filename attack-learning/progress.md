@@ -139,6 +139,7 @@ checked and answered well.
 | T1528 Steal Application Access Token | credential-access | 2026-08-10 | **solid** |
 | T1555.006 Cloud Secrets Management Stores | credential-access | 2026-08-10 | **solid** |
 | T1505.003 Web Shell | persistence | 2026-08-10 | **solid** |
+| T1098.001 Additional Cloud Credentials | persistence | 2026-08-10 | **shaky** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -226,6 +227,41 @@ does *not* apply and gets specified anyway: private endpoints and vault firewall
 is executing inside the network as the workload), encryption of contents (the vault decrypts for
 authorised callers by design), and soft-delete/purge protection (recovery controls — they
 address destruction, not disclosure).
+
+**Azure has two permission systems and privilege converts between them** (2026-08-10, from
+T1098.001 Additional Cloud Credentials). **Azure RBAC** governs resources — subscriptions,
+resource groups, storage, Key Vault — with Owner/Contributor/Reader scoped to a resource
+hierarchy. **Microsoft Graph permissions and Entra ID roles** govern the directory — users,
+groups, app registrations, service principals — with roles like Global Administrator and
+Application Administrator and permissions like `Application.ReadWrite.All`. Separate systems,
+separate administrators, almost never reviewed together. An identity holding
+`Application.ReadWrite.All` and **no** Azure RBAC role at all can still write a credential to a
+service principal that holds Owner on production, then authenticate as it — which is why that
+permission is treated as Global Administrator-equivalent. The design-review question that
+catches this and the Key Vault case alike: **can this identity become an identity that has what
+it lacks?**
+
+**Creating an identity is the weak path; credentialing an existing one is the strong path**
+(2026-08-10). A new app registration (**T1136.003 Cloud Account**) starts with zero permissions,
+needs a second privileged step to be useful, and puts a conspicuous new principal in the
+directory. Adding a credential to an existing privileged identity (**T1098.001 Additional Cloud
+Credentials**) creates no new object, needs no consent or role assignment, and inherits privilege
+granted legitimately years earlier. This was the miss on the T1098.001 check.
+
+**MFA registration is a persistence mechanism, not only a control** (2026-08-10). Storm-0501
+"reset the password of identified administrator accounts that lack MFA and registered their own
+MFA method" — so **M1032 Multi-factor Authentication** is listed as a mitigation for a technique
+whose procedure consists of enrolling MFA. Specifying MFA without controlling MFA *registration*
+is close to circular. Similarly **M1030 Network Segmentation** is noise for the Entra case:
+adding a credential is an API call to a global Microsoft Graph endpoint with no network path to
+segment; it is on the list for the IaaS SSH-key scenario in MITRE's description.
+
+**Entra audit log retention is the binding telemetry question here** (2026-08-10). Credential
+additions to applications and service principals are recorded natively with no configuration —
+one of the highest-signal events in the tenant, since a certificate added outside a change
+window has almost no benign explanation. But default retention is roughly a month, less on the
+free tier, against SolarWinds-scale dwell times of many months. Routing Entra audit logs to a
+Log Analytics workspace with real retention is the requirement, and it is not on by default.
 
 **A deployment is not a remediation** (2026-08-10, from T1505.003 Web Shell). Pipelines converge
 the target toward a declared desired state; they do not remove what nobody declared. Azure App
