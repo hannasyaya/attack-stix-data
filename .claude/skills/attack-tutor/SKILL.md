@@ -396,9 +396,49 @@ together; it never substitutes for teaching the techniques.
 
 At the start of a session, read that file if it exists and pick up where they left off.
 
+### Report mode
+**The current route, chosen by the user on 2026-08-11: "I want to learn by report."** An incident
+report supplies the spine instead of the tactic list. The tactic tour is paused mid-persistence,
+not abandoned — see `attack-learning/progress.md` for where it stopped.
+
+**Read the whole report before teaching a single technique.** The extraction is a one-off script
+into the scratchpad, not a page-at-a-time read while teaching. You cannot pick what matters from
+the first ten pages, and the report's own sequence is the thing report mode exists to teach.
+
+**Map it to ATT&CK with the script, never from memory.** Run `chain <actor>` for the shape, then
+`technique` and `actors` for every candidate. Reports predate current ATT&CK naming and sub-technique
+splits; a mapping recalled rather than checked will be wrong.
+
+**Two sources per technique, and keep them distinct.** Section 4 leads with **the report's own
+words, quoted, with its section number**, then adds two or three other groups from `actors <ID>`
+so the lesson is not one anecdote. Never blend the report's language into a MITRE quote or the
+reverse.
+
+**Where the report shows behaviour ATT&CK does not carry for that actor, say the mapping is
+yours.** Cobalt Kitty documents DNS tunnelling; ATT&CK records no T1071.004 DNS procedure for
+APT32. Both facts get stated. The gap is itself worth teaching — it is how a learner sees that
+ATT&CK is a model of reporting, not of reality.
+
+**Say what the report's own source relationship is.** Several ATT&CK procedures *are* this report,
+compressed to one sentence. Show the compression when it happens: it teaches what the model keeps
+and what it discards, which is the most transferable thing report mode offers.
+
+**Date the report and state what has changed since.** A 2017 report teaches 2017's control set. Name
+the controls that did not exist then and would change the outcome now, or the user learns a
+defensive posture a decade out of date.
+
+Same seven sections, same one-technique-per-message rule, same named-and-skipped discipline for
+everything in the report not being taught. Number them `4/13` in the header. Callbacks, not
+re-teaching, for techniques already covered — the new flavour in a few sentences.
+
+**Report close:** reconstruct the path end to end, name the control that breaks it earliest, and
+collect the **control-defeat sentences** — every line where the report shows a control that was
+present and was got around. Those sentences are the reason to read reports at all.
+
 ### Tactic tour
-**The current route.** Walk one adversary goal at a time with `tactic`, in the order recorded in
-`attack-learning/progress.md` — lifecycle order, not ID order.
+**Paused 2026-08-11 in favour of report mode.** Resume at the point recorded in
+`attack-learning/progress.md`. Walk one adversary goal at a time with `tactic`, in the order
+recorded there — lifecycle order, not ID order.
 
 **Three techniques per tactic, chosen by where the user has architectural decisions**, not by
 usage count. Depth over breadth was an explicit request: go deep on three rather than skimming

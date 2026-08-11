@@ -96,7 +96,78 @@ Rules live in `.claude/skills/attack-tutor/SKILL.md`. Assessment questions are b
 
 ---
 
-## The route: a tactic tour
+## The route changed 2026-08-11: learning by report
+
+The user's instruction: *"I want to learn by report and here is the first report."* The tactic
+tour is **paused, not abandoned** — it stopped after the TA0003 Persistence opener, before
+T1053.005 Scheduled Task was taught.
+
+**Report 1: Cybereason, *Operation Cobalt Kitty* (2017), by Assaf Dahan.** OceanLotus / APT32
+(G0050) against a global corporation in Asia. 100 pages in two parts — the attack lifecycle
+(pages 1–32) and the attackers' arsenal (pages 33–100, malware analysis, largely out of scope
+for an architect). Text extracted to the scratchpad and read in full before any teaching.
+
+**Why the switch costs almost nothing.** The report covers six of the seven techniques already
+taught on the on-prem track — T1566.001 Spearphishing Attachment, T1204.002 Malicious File,
+T1059.001 PowerShell, T1047 Windows Management Instrumentation, plus valid-account reuse — and
+its foothold section is exactly the three persistence techniques the tour was about to teach:
+T1053.005 Scheduled Task, T1547.001 Registry Run Keys / Startup Folder, T1543.003 Windows
+Service. The tour's next three arrive with real evidence attached instead of a curriculum note.
+
+**The source relationship worth showing the user.** MITRE's own APT32 procedure text for
+T1547.001, T1053.005, T1543.003, T1574.001, T1003.001, T1021.002, T1550.002, T1550.003, T1046,
+T1218.005 and T1027.010 traces back to *this report*. Reading the report and then the ATT&CK
+entry shows what the model keeps and what it throws away — a 30-page intrusion compressed to
+*"APT32 has used scheduled tasks to persist on victim systems."*
+
+**The report's shape, which is a lesson in itself.** `chain APT32` over `--platforms
+Linux,Windows` returns 78 techniques: 20 stealth, 13 execution, 10 discovery, 7 persistence —
+and **zero impact**. Espionage, not extortion. Nothing is encrypted, nothing is destroyed; the
+objective is mail and documents from named executives.
+
+### Curriculum — 12 techniques, in the report's own order
+
+| # | Technique | Report section | Why it earns a slot |
+|---|---|---|---|
+| 1 | T1053.005 Scheduled Task | 1, post-infection | Where the macro lands; two tasks named "Windows Error Reporting" |
+| 2 | T1218.005 Mshta | 1 / 3.1 | Signed Windows binary fetches and runs attacker code. Names T1218.010 Regsvr32, T1218.011 Rundll32 |
+| 3 | T1547.001 Registry Run Keys / Startup Folder | 2.1 | Five Run keys, VBScript hidden in NTFS alternate data streams |
+| 4 | T1543.003 Windows Service | 2.2 | Services created and modified to load PowerShell |
+| 5 | T1574.001 DLL | 2.2 / 2.3 | Phantom DLL hijacking of Wsearch; side-loading against GoogleUpdate. Trust in a *path*, not an identity |
+| 6 | T1137 Office Application Startup | 2.4 / 3.4 | VbaProject.OTM replaced — an application's own extension model as persistence *and* as C2 |
+| 7 | T1071.004 DNS | 3.3 | Tunnelling via 8.8.8.8 and 208.67.222.222, chosen because nobody blocks them |
+| 8 | T1071.001 Web Protocols | 3.1 / 3.2 / 3.5 | Malleable C2 profiles; NetCat configured for the victim's own proxy |
+| 9 | T1046 Network Service Discovery | 4.1 | Whole-range scanning. Carries the segmentation argument the user has missed three times |
+| 10 | T1003.001 LSASS Memory | 5.1.1 | 14 recompiled Mimikatz variants — antivirus is not a control against a rebuilt tool |
+| 11 | T1550.002 Pass the Hash | 5.2 | Names T1550.003 Pass the Ticket. Why the password resets did not help |
+| 12 | T1021.002 SMB/Windows Admin Shares | 5.3 | C$ and ADMIN$ via net.exe; 35+ machines including the AD server |
+
+**Named and skipped**, so the subset is not mistaken for the whole: T1566.002 Spearphishing Link,
+T1059.005 Visual Basic, T1027.010 Command Obfuscation, T1027.013 Encrypted/Encoded File,
+T1112 Modify Registry, T1564.004 NTFS File Attributes, T1036.005 Match Legitimate Resource Name
+or Location, T1102 Web Service, T1105 Ingress Tool Transfer, T1571 Non-Standard Port, T1570
+Lateral Tool Transfer, T1087.001 Local Account, T1018 Remote System Discovery, T1016 System
+Network Configuration Discovery, T1049 System Network Connections Discovery, T1033 System
+Owner/User Discovery, T1135 Network Share Discovery, T1114.001 Local Email Collection, T1041
+Exfiltration Over C2 Channel.
+
+**Deferred from the tour's persistence list**, displaced by the report's own evidence: T1136.001
+Local Account and T1556 Modify Authentication Process.
+
+**The date problem, to be stated in every message where it bites.** This is 2017 and Windows
+7-era — Outlook 2010 (`Office\14`), no Credential Guard, no AMSI-backed script block logging by
+default, no Attack Surface Reduction rules, PowerShell v2 downgrade still available. Controls
+that would change the outcome today must be named as *today's*, not read back into the report.
+
+**The control-defeat sentences** — collect these across the report; they are the reason to read
+one. Already found: IT ordered frequent password resets during the incident and the attackers
+had deployed a tool that hooks the password-change function to keep up; PowerShell execution
+restrictions were in place and were bypassed with PSUnlock loading the runtime through
+rundll32; 80+ payloads recovered, **two** known to VirusTotal at the time.
+
+---
+
+## The paused route: a tactic tour
 
 Walking the 13 tactics one at a time — what the adversary is trying to achieve at that stage,
 then the application-layer techniques that matter within it.
@@ -120,7 +191,7 @@ identity attacks skip entirely.
 |---|---|---|---|
 | 1 | TA0001 initial-access | 21 | **done** 2026-08-10 |
 | 2 | TA0002 execution | 48 | **done** 2026-08-11 |
-| 3 | TA0003 persistence | 91 | **next** |
+| 3 | TA0003 persistence | 91 | opener given 2026-08-11, **paused here** for report mode |
 | 4 | TA0004 privilege-escalation | 79 | not started |
 | 5 | TA0006 credential-access | 58 | not started |
 | 6 | TA0007 discovery | 42 | not started |
