@@ -205,6 +205,7 @@ the record and is not re-taught. **On-prem track from here:**
 | T1566.001 Spearphishing Attachment | initial-access | 2026-08-10 | **solid** |
 | T1133 External Remote Services | initial-access | 2026-08-10 | **shaky** |
 | T1078.002 Domain Accounts | initial-access | 2026-08-10 | **solid** |
+| T1059.001 PowerShell | execution | 2026-08-11 | **solid** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -294,6 +295,32 @@ authorised callers by design), and soft-delete/purge protection (recovery contro
 address destruction, not disclosure).
 
 ### On-prem track
+
+**PowerShell execution policy is not a security control** (2026-08-11, from T1059.001
+PowerShell). `RemoteSigned` and `AllSigned` exist to stop users running scripts by mistake, and
+Microsoft documents them that way. Bypassed by a command-line switch, by piping to standard
+input, or by an encoded command. **M1045 Code Signing** appearing on this technique's mitigation
+list does not make execution policy an answer. **M1042 Disable or Remove Feature or Program** is
+equally hollow — Windows and your own operations depend on PowerShell, and an adversary can host
+the engine inside their own executable without launching `powershell.exe`, so blocking the binary
+blocks the name rather than the capability.
+
+**The control that works is application control, for a side effect** (2026-08-11). Windows
+Defender Application Control or AppLocker **in enforcement mode** puts PowerShell into
+**Constrained Language Mode**, removing the type and API access most offensive tooling needs
+while leaving ordinary administrative scripting intact. Ask for that by name — "block code
+execution" is a wish, this is a testable requirement. **M1026 Privileged Account Management**
+closes it: a script does what the account running it can do.
+
+**PowerShell has the best telemetry story in the on-prem foundation, with two conditions**
+(2026-08-11). **Script block logging** records executed content **after deobfuscation**, so
+encoded scripts (APT29's procedure) land in the log as readable text. It is **off by default**,
+enabled by Group Policy, and must be forwarded off the host — an administrator can disable it,
+which is **T1685 Disable or Modify Tools**, used by Akira. Second condition: that logging arrived
+in PowerShell v5, so **PowerShell 2.0 must be removed from the estate** or an adversary can
+request the old version and execute unrecorded. And the Antimalware Scan Interface does give the
+scanner sight of script content at execution after decoding — routinely bypassed, so not a
+control to rely on, but the reason encoding alone does not buy invisibility.
 
 ### Tactic 1 close — initial-access, on-prem (2026-08-10)
 
