@@ -207,6 +207,7 @@ the record and is not re-taught. **On-prem track from here:**
 | T1078.002 Domain Accounts | initial-access | 2026-08-10 | **solid** |
 | T1059.001 PowerShell | execution | 2026-08-11 | **solid** |
 | T1204.002 Malicious File | execution | 2026-08-11 | **shaky** |
+| T1047 Windows Management Instrumentation | execution | 2026-08-11 | **solid** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -296,6 +297,29 @@ authorised callers by design), and soft-delete/purge protection (recovery contro
 address destruction, not disclosure).
 
 ### On-prem track
+
+**For any protocol you cannot disable, ask three questions: who, from where, and to do what**
+(2026-08-11, from T1047 Windows Management Instrumentation). The check — monitoring uses WMI
+estate-wide, so it cannot be restricted — was answered with the *who*: restrict WMI to the
+monitoring service account, and do not make that account privileged. Correct, and the
+service-account lesson from T1078.002 Domain Accounts was transferred unprompted. Two additions.
+**WMI namespace permissions are not a boundary** — remote WMI execution already requires local
+administrator on the target, and a local administrator can rewrite those permissions; the real
+gate is which accounts hold local admin across the estate. And **the missing half is again the
+network one** (third time, after T1133 External Remote Services and the jump host): restrict
+inbound **135** and **5985** by host firewall to the monitoring servers' addresses. Monitoring
+keeps working; a compromised workstation cannot reach WMI on any server at all, and that holds
+even when the attacker obtains an administrative credential, because there is no path to
+authenticate over. Third layer: **M1040 Behavior Prevention on Endpoint** — block the WMI
+provider host from spawning shells.
+
+**M1038 Execution Prevention is weak against T1047 specifically** (2026-08-11). Application
+control governs which binaries may run; WMI is serviced by an already-permitted signed Windows
+process, so application control constrains **what WMI starts**, not WMI. Also worth holding: one
+action — "run a command on that server" — spans **T1047 Windows Management Instrumentation**
+(execution), **T1021.003 Distributed Component Object Model** or **T1021.006 Windows Remote
+Management** (transport, lateral movement), and often **T1550.002 Pass the Hash**
+(authentication). Three techniques, three different controls: endpoint, firewall, credential.
 
 **Training is a detection control here, not a prevention control** (2026-08-11, from T1204.002
 Malicious File — the check was answered with extension filtering correctly rejected and **user
