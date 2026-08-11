@@ -206,6 +206,7 @@ the record and is not re-taught. **On-prem track from here:**
 | T1133 External Remote Services | initial-access | 2026-08-10 | **shaky** |
 | T1078.002 Domain Accounts | initial-access | 2026-08-10 | **solid** |
 | T1059.001 PowerShell | execution | 2026-08-11 | **solid** |
+| T1204.002 Malicious File | execution | 2026-08-11 | **shaky** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -295,6 +296,29 @@ authorised callers by design), and soft-delete/purge protection (recovery contro
 address destruction, not disclosure).
 
 ### On-prem track
+
+**Training is a detection control here, not a prevention control** (2026-08-11, from T1204.002
+Malicious File — the check was answered with extension filtering correctly rejected and **user
+training recommended in its place**, which is the control this technique is built to defeat).
+FIN7's victims "double-click[ed] on **images** in the attachments"; Kimsuky used "LNK files
+disguised with tailored filenames and fake extensions". Training teaches people to recognise
+signals; **T1036 Masquerading** exists to remove the signals. Both extension filtering and
+training are the same losing move — enumerating badness, once at a gateway and once in a human's
+head under time pressure. What answers it: **M1040 Behavior Prevention on Endpoint** (attack
+surface reduction — *block Office applications from creating child processes*, *block executable
+content from email clients*), which acts on **behaviour rather than format** and is therefore
+indifferent to whichever extension is invented next; behind it **M1038 Execution Prevention**,
+since a `.lnk` runs a command and application control constrains what that command may start.
+Training's legitimate role is **reporting** — a user who says "I opened something odd" hands over
+an incident that would otherwise surface in three months.
+
+**Pattern to work on: the general test is derived correctly and then not applied** (2026-08-11).
+*What does this control do after the assumption it depends on has failed?* — produced unaided at
+T1566.001 Spearphishing Attachment when choosing account management over training. Not reached
+for at **T1133 External Remote Services** (front-door answers only, segmentation missed) and not
+reached for at **T1204.002 Malicious File** (training recommended, whose assumption is that the
+user can tell). The knowledge is there; the reflex is not yet. Retest by asking for the
+assumption behind a named control rather than for the control.
 
 **PowerShell execution policy is not a security control** (2026-08-11, from T1059.001
 PowerShell). `RemoteSigned` and `AllSigned` exist to stop users running scripts by mistake, and
