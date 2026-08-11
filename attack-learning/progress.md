@@ -342,9 +342,15 @@ control positioned at the payload fetch is egress control. ATT&CK's mitigation s
 Ingress Tool Transfer is M1031 Network Intrusion Prevention and M1037 Filter Network Traffic —
 **no endpoint control at all.** Cash this in at 8/13 T1071.004 DNS.
 
-**Parked check:** T1053.005 Scheduled Task's check question (only administrators may create
-scheduled tasks + alert on every newly created task) was asked and displaced by two format
-corrections. Status stays `untested` until it is answered.
+**T1053.005 Scheduled Task — check cancelled at the user's request on 2026-08-11**, after being
+carried across the two format corrections. Status stays `untested`; the technique itself was
+taught twice, in full. Do not re-ask it as a standalone question — if the run-as account idea
+needs testing, fold it into a later check (T1543.003 Windows Service is the natural place, since
+it is the same axis with a different default).
+
+**Process lesson:** a check question does not survive a format correction. If a message gets
+re-issued or corrected, the question inside it is lost, whatever the transcript says. Ask it
+fresh in its own message, or drop it.
 
 **MFA and Conditional Access do not evaluate workload identity sign-ins** (2026-08-10, from
 T1078.004). A service principal authenticating by client secret or certificate uses the OAuth
