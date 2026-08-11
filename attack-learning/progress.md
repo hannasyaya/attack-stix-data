@@ -119,8 +119,8 @@ identity attacks skip entirely.
 | # | Tactic | In scope | Status |
 |---|---|---|---|
 | 1 | TA0001 initial-access | 21 | **done** 2026-08-10 |
-| 2 | TA0002 execution | 48 | **next** |
-| 3 | TA0003 persistence | 91 | not started |
+| 2 | TA0002 execution | 48 | **done** 2026-08-11 |
+| 3 | TA0003 persistence | 91 | **next** |
 | 4 | TA0004 privilege-escalation | 79 | not started |
 | 5 | TA0006 credential-access | 58 | not started |
 | 6 | TA0007 discovery | 42 | not started |
@@ -208,6 +208,7 @@ the record and is not re-taught. **On-prem track from here:**
 | T1059.001 PowerShell | execution | 2026-08-11 | **solid** |
 | T1204.002 Malicious File | execution | 2026-08-11 | **shaky** |
 | T1047 Windows Management Instrumentation | execution | 2026-08-11 | **solid** |
+| T1203 Exploitation for Client Execution | execution | 2026-08-11 | **solid** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -297,6 +298,52 @@ authorised callers by design), and soft-delete/purge protection (recovery contro
 address destruction, not disclosure).
 
 ### On-prem track
+
+### Tactic 2 close — execution, on-prem (2026-08-11)
+
+**Three ways to get code running, only one involving a vulnerability.** T1059.001 PowerShell and
+T1047 Windows Management Instrumentation abuse **signed Microsoft components you installed on
+purpose**; T1204.002 Malicious File abuses **the user**; T1203 Exploitation for Client Execution
+abuses **a bug**. Three control families — constrain the tool, remove the decision, patch or
+sandbox — and specifying the wrong family is this tactic's failure mode.
+
+**M1049 Antivirus/Antimalware appears once in four techniques** (T1059.001 PowerShell, and there
+only partially via the Antimalware Scan Interface). An execution-phase story of "we have endpoint
+antivirus" covers roughly a quarter of one technique.
+
+**Unlike every earlier tactic, one mitigation genuinely spans this one.** **M1038 Execution
+Prevention** — application control — is on three of four, doing a different job in each:
+Constrained Language Mode against PowerShell, blocking what a `.lnk` launches, constraining what
+WMI starts. **M1040 Behavior Prevention on Endpoint** covers two. Application control in
+enforcement mode is the highest-value on-prem investment in this tactic and carries the largest
+operational cost, which is why it usually does not happen.
+
+**One telemetry decision serves all four: process ancestry.** Every technique signals the same
+way — what spawned what. Requires Sysmon or Windows process-creation auditing with command lines,
+**both off by default**, forwarded from workstations and member servers, which is exactly where
+most estates do not collect. One decision, four techniques — that is the budget argument.
+
+**Taught:** T1059.001 PowerShell, T1204.002 Malicious File, T1047 Windows Management
+Instrumentation, T1203 Exploitation for Client Execution. **Named and skipped:** T1059.003
+Windows Command Shell (91 groups — highest-usage technique skipped anywhere, deliberately: same
+design decisions as PowerShell); T1059.005 Visual Basic, T1059.007 JavaScript, T1059.006 Python,
+T1059.004 Unix Shell (covered by the macro policy and the same controls); T1106 Native API (an
+evasion refinement — it is what an adversary moves to when PowerShell is constrained, so it
+measures what that control bought); T1072 Software Deployment Tools (strongest fifth candidate —
+belongs with the privilege discussion); T1574 Hijack Execution Flow and T1053 Scheduled Task/Job
+(carry persistence, taught there); T1197 BITS Jobs, T1129 Shared Modules, T1559 Inter-Process
+Communication, T1674 Input Injection (narrow).
+
+**T1203 exposure findings:** client **applications**, not the OS, are the gap — and the CVE lists
+name them (Office, Adobe Reader and Flash, WinRAR, Internet Explorer and Edge, Java); the worst
+patched sit outside the standard build, so **you cannot patch what you do not know is installed**
+(third appearance of the inventory idea after T1133 External Remote Services). "Office is
+patched" can be true while the vulnerable component is not — `CVE-2017-11882` was in Equation
+Editor, which Microsoft eventually removed rather than fixed. Second exposure, not named in the
+answer: **the zero-day**. A patch SLA assumes a patch exists; **M1048 Application Isolation and
+Sandboxing** is what remains standing when it does not. **Read the CVE numbers, not the group
+names** — `CVE-2012-0158` and `CVE-2017-11882` recur across unrelated groups for a decade, so
+client exploitation is overwhelmingly old patched bugs rather than zero-day work.
 
 **For any protocol you cannot disable, ask three questions: who, from where, and to do what**
 (2026-08-11, from T1047 Windows Management Instrumentation). The check — monitoring uses WMI
