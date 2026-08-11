@@ -125,24 +125,37 @@ Linux,Windows` returns 78 techniques: 20 stealth, 13 execution, 10 discovery, 7 
 and **zero impact**. Espionage, not extortion. Nothing is encrypted, nothing is destroyed; the
 objective is mail and documents from named executives.
 
-### Curriculum — 12 techniques, in the report's own order
+### Curriculum — 13 techniques, in the report's own order
+
+**Corrected 2026-08-11, on the user's catch:** *"The penetration starts by spearphishing but you
+didn't select it."* Right, and it was a real defect. The report's phase 1 has **two** penetration
+paths — a link to a fake Flash installer, and a Word attachment — and only the attachment path
+was covered by an existing lesson (T1566.001 Spearphishing Attachment, taught 2026-08-10).
+T1566.002 Spearphishing Link had never been taught and was wrongly put on the skipped list, so
+the report's own opening move was missing from a curriculum built on the report's sequence.
+**T1053.005 Scheduled Task was therefore taught out of order** and is renumbered 2/13.
+
+**Rule this produced:** in report mode, every technique in the report's *first* phase gets taught
+or explicitly called back **before** anything downstream of it. A report's value is its sequence;
+starting in the middle discards the thing the report was chosen for.
 
 | # | Technique | Report section | Why it earns a slot |
 |---|---|---|---|
-| 1 | T1053.005 Scheduled Task | 1, post-infection | Where the macro lands; two tasks named "Windows Error Reporting" |
-| 2 | T1218.005 Mshta | 1 / 3.1 | Signed Windows binary fetches and runs attacker code. Names T1218.010 Regsvr32, T1218.011 Rundll32 |
-| 3 | T1547.001 Registry Run Keys / Startup Folder | 2.1 | Five Run keys, VBScript hidden in NTFS alternate data streams |
-| 4 | T1543.003 Windows Service | 2.2 | Services created and modified to load PowerShell |
-| 5 | T1574.001 DLL | 2.2 / 2.3 | Phantom DLL hijacking of Wsearch; side-loading against GoogleUpdate. Trust in a *path*, not an identity |
-| 6 | T1137 Office Application Startup | 2.4 / 3.4 | VbaProject.OTM replaced — an application's own extension model as persistence *and* as C2 |
-| 7 | T1071.004 DNS | 3.3 | Tunnelling via 8.8.8.8 and 208.67.222.222, chosen because nobody blocks them |
-| 8 | T1071.001 Web Protocols | 3.1 / 3.2 / 3.5 | Malleable C2 profiles; NetCat configured for the victim's own proxy |
-| 9 | T1046 Network Service Discovery | 4.1 | Whole-range scanning. Carries the segmentation argument the user has missed three times |
-| 10 | T1003.001 LSASS Memory | 5.1.1 | 14 recompiled Mimikatz variants — antivirus is not a control against a rebuilt tool |
-| 11 | T1550.002 Pass the Hash | 5.2 | Names T1550.003 Pass the Ticket. Why the password resets did not help |
-| 12 | T1021.002 SMB/Windows Admin Shares | 5.3 | C$ and ADMIN$ via net.exe; 35+ machines including the AD server |
+| 1 | T1566.002 Spearphishing Link | 1 | The report's opening move. The mail control never sees the payload — it arrives later, over HTTP, from a redirector |
+| 2 | T1053.005 Scheduled Task | 1, post-infection | Where the macro lands; two tasks named "Windows Error Reporting" |
+| 3 | T1218.005 Mshta | 1 / 3.1 | Signed Windows binary fetches and runs attacker code. Names T1218.010 Regsvr32, T1218.011 Rundll32 |
+| 4 | T1547.001 Registry Run Keys / Startup Folder | 2.1 | Five Run keys, VBScript hidden in NTFS alternate data streams |
+| 5 | T1543.003 Windows Service | 2.2 | Services created and modified to load PowerShell |
+| 6 | T1574.001 DLL | 2.2 / 2.3 | Phantom DLL hijacking of Wsearch; side-loading against GoogleUpdate. Trust in a *path*, not an identity |
+| 7 | T1137 Office Application Startup | 2.4 / 3.4 | VbaProject.OTM replaced — an application's own extension model as persistence *and* as C2 |
+| 8 | T1071.004 DNS | 3.3 | Tunnelling via 8.8.8.8 and 208.67.222.222, chosen because nobody blocks them |
+| 9 | T1071.001 Web Protocols | 3.1 / 3.2 / 3.5 | Malleable C2 profiles; NetCat configured for the victim's own proxy |
+| 10 | T1046 Network Service Discovery | 4.1 | Whole-range scanning. Carries the segmentation argument the user has missed three times |
+| 11 | T1003.001 LSASS Memory | 5.1.1 | 14 recompiled Mimikatz variants — antivirus is not a control against a rebuilt tool |
+| 12 | T1550.002 Pass the Hash | 5.2 | Names T1550.003 Pass the Ticket. Why the password resets did not help |
+| 13 | T1021.002 SMB/Windows Admin Shares | 5.3 | C$ and ADMIN$ via net.exe; 35+ machines including the AD server |
 
-**Named and skipped**, so the subset is not mistaken for the whole: T1566.002 Spearphishing Link,
+**Named and skipped**, so the subset is not mistaken for the whole:
 T1059.005 Visual Basic, T1027.010 Command Obfuscation, T1027.013 Encrypted/Encoded File,
 T1112 Modify Registry, T1564.004 NTFS File Attributes, T1036.005 Match Legitimate Resource Name
 or Location, T1102 Web Service, T1105 Ingress Tool Transfer, T1571 Non-Standard Port, T1570

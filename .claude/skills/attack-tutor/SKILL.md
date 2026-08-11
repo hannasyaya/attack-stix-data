@@ -409,6 +409,13 @@ the first ten pages, and the report's own sequence is the thing report mode exis
 `technique` and `actors` for every candidate. Reports predate current ATT&CK naming and sub-technique
 splits; a mapping recalled rather than checked will be wrong.
 
+**Start where the report starts.** Every technique in the report's first phase is taught, or
+explicitly called back, **before anything downstream of it**. Caught by the user on 2026-08-11:
+*"The penetration starts by spearphishing but you didn't select it."* A report is chosen for its
+sequence, so opening in the middle throws away the reason for choosing it. When a phase has more
+than one path — Cobalt Kitty's phase 1 has a link path and an attachment path — account for
+every path, and do not let one already-taught technique cover for a different one that is not.
+
 **Recall the tactic at the top of every technique, quoted from `tactic <name>`.** Instruction
 from the user on 2026-08-11: *"please recall the tactic too."* A report's sequence is phases of
 an intrusion, not ATT&CK tactics, so nothing else in report mode supplies the tactic frame that
