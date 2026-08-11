@@ -409,6 +409,13 @@ the first ten pages, and the report's own sequence is the thing report mode exis
 `technique` and `actors` for every candidate. Reports predate current ATT&CK naming and sub-technique
 splits; a mapping recalled rather than checked will be wrong.
 
+**Recall the tactic at the top of every technique, quoted from `tactic <name>`.** Instruction
+from the user on 2026-08-11: *"please recall the tactic too."* A report's sequence is phases of
+an intrusion, not ATT&CK tactics, so nothing else in report mode supplies the tactic frame that
+the tour used to give for free. Name every tactic the technique sits under, with MITRE's goal
+sentence for each — and when a technique sits under three, say what that means, because carrying
+three tactics is itself a structural fact about the technique.
+
 **Section 4 becomes "what the attacker did in the report", and it is the longest section.**
 Instruction from the user on 2026-08-11: *"In the section what real group did I need you to
 explain what the attacker did in the report."* Not the report quoted in a line and then handed
