@@ -59,9 +59,11 @@ runs as, an app server's file permissions, a database the app owns — lead with
    it from the adjacent techniques it gets confused with. Naming the wrong technique in a design
    review means specifying the wrong control.
 2. **Why the adversary does it** — the goal it serves.
-3. **On your stack** — one concrete Azure scenario.
+3. **On your stack** — one concrete on-premises scenario, named services.
 4. **What real groups did** — four or five named groups and what each actually did, quoted not
-   summarised, then the pattern across them.
+   summarised, then the pattern across them. **In report mode this section becomes "what the
+   attacker did in the report"**, walked through in mechanical detail, with other groups reduced
+   to a short corroboration afterwards.
 5. **What stops it** — mitigations as design requirements, including **at least one that does
    not apply and why**. Knowing which controls are inapplicable stops you specifying security
    theatre.
