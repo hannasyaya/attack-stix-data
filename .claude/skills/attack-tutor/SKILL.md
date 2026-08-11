@@ -409,10 +409,16 @@ the first ten pages, and the report's own sequence is the thing report mode exis
 `technique` and `actors` for every candidate. Reports predate current ATT&CK naming and sub-technique
 splits; a mapping recalled rather than checked will be wrong.
 
-**Two sources per technique, and keep them distinct.** Section 4 leads with **the report's own
-words, quoted, with its section number**, then adds two or three other groups from `actors <ID>`
-so the lesson is not one anecdote. Never blend the report's language into a MITRE quote or the
-reverse.
+**Section 4 becomes "what the attacker did in the report", and it is the longest section.**
+Instruction from the user on 2026-08-11: *"In the section what real group did I need you to
+explain what the attacker did in the report."* Not the report quoted in a line and then handed
+over to other groups — the actual mechanics, walked through: the command they ran and what each
+part of it does, what it produced, what it did next, and why they built it that way. If the
+report prints a command line, take it apart flag by flag. **Other groups from `actors <ID>` come
+after, in two or three lines**, only to show whether the report's version is typical or unusual.
+
+Keep the two sources distinct: the report's words are quoted with its section number, MITRE's
+words are quoted from the script, and neither gets rewritten into the other's language.
 
 **Where the report shows behaviour ATT&CK does not carry for that actor, say the mapping is
 yours.** Cobalt Kitty documents DNS tunnelling; ATT&CK records no T1071.004 DNS procedure for
