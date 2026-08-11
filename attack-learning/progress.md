@@ -293,6 +293,8 @@ the record and is not re-taught. **On-prem track from here:**
 | T1204.002 Malicious File | execution | 2026-08-11 | **shaky** |
 | T1047 Windows Management Instrumentation | execution | 2026-08-11 | **solid** |
 | T1203 Exploitation for Client Execution | execution | 2026-08-11 | **solid** |
+| T1566.002 Spearphishing Link | initial-access | 2026-08-11 | **solid** |
+| T1053.005 Scheduled Task | persistence | 2026-08-11 | untested |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -305,6 +307,42 @@ later on T1195.002. Retest it in tactic 2 rather than reteaching it.
 ## Findings
 
 Observations worth keeping, recorded as they come up.
+
+### Report track — Cobalt Kitty (2026-08-11)
+
+**T1566.002 Spearphishing Link — solid.** The check asked what click-time URL rewriting still
+does not cover, given how the link path was built. Answer: *"The rewriting is just for the first
+link in the mail. It doesn't apply to the link flash use to download the payload?"* Correct, and
+reached without scaffolding beyond a definition of the term. **This is the first time the
+control-boundary reasoning was produced unaided** — the same move that was missed at T1133
+External Remote Services and at T1204.002 Malicious File.
+
+Two beats not reached, both given: the redirector defeats click-time evaluation even at step 1,
+because it serves different content to a scanner than to the victim's browser; and the same
+campaign ran an attachment path with no link in it at all.
+
+**The decomposition finding, which produced the answer.** One sentence of a report is several
+techniques, because ATT&CK models behaviours rather than incidents. The link-to-beacon chain is
+five: T1566.002 Spearphishing Link (TA0001) → T1204.001 Malicious Link (TA0002) → T1204.002
+Malicious File (TA0002) → T1105 Ingress Tool Transfer (TA0011) → T1027.013 Encrypted/Encoded
+File (TA0005). **Five techniques means five control opportunities, each owned by a different part
+of the architecture**, and a mail gateway is present at one of them. Teaching the decomposition
+first is what made the check answerable — do this at the start of every phase in a report.
+
+**Jargon defect, 2026-08-11.** "Click-time URL rewriting" was used across two messages with no
+gloss, and the user could not answer the check because of the term rather than the idea: *"I
+don't know what is click time."* The rule against unglossed product terms already exists in
+SKILL.md and was broken anyway. Product names (Safe Links, URL Defense) come *after* the
+mechanism, never instead of it.
+
+**Egress is the sentence to carry forward.** Between the click and Beacon in memory, the only
+control positioned at the payload fetch is egress control. ATT&CK's mitigation set for T1105
+Ingress Tool Transfer is M1031 Network Intrusion Prevention and M1037 Filter Network Traffic —
+**no endpoint control at all.** Cash this in at 8/13 T1071.004 DNS.
+
+**Parked check:** T1053.005 Scheduled Task's check question (only administrators may create
+scheduled tasks + alert on every newly created task) was asked and displaced by two format
+corrections. Status stays `untested` until it is answered.
 
 **MFA and Conditional Access do not evaluate workload identity sign-ins** (2026-08-10, from
 T1078.004). A service principal authenticating by client secret or certificate uses the OAuth
