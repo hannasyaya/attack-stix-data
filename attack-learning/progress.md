@@ -311,7 +311,7 @@ the record and is not re-taught. **On-prem track from here:**
 | T1047 Windows Management Instrumentation | execution | 2026-08-11 | **solid** |
 | T1203 Exploitation for Client Execution | execution | 2026-08-11 | **solid** |
 | T1566.002 Spearphishing Link | initial-access | 2026-08-11 | **solid** |
-| T1053.005 Scheduled Task | persistence | 2026-08-11 | untested |
+| T1053.005 Scheduled Task | persistence | 2026-08-11 | **shaky** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -357,7 +357,26 @@ control positioned at the payload fetch is egress control. ATT&CK's mitigation s
 Ingress Tool Transfer is M1031 Network Intrusion Prevention and M1037 Filter Network Traffic —
 **no endpoint control at all.** Cash this in at 8/13 T1071.004 DNS.
 
-**T1053.005 Scheduled Task — check cancelled at the user's request on 2026-08-11**, after being
+**T1053.005 Scheduled Task — shaky.** A fresh check was asked after the third delivery (approve a
+nightly batch job running as a domain service account with `db_owner` on the application
+database). Answer: *"It should not run as domain account."* Wrong for the scenario — the job
+reaches SQL Server over the network, and a local account has no identity off its own machine, so
+the requirement makes the job impossible. The axis was right (constrain the reach of the
+identity), the conclusion was not.
+
+**This is a regression, and it is the same regression as before.** They produced *"privilege
+management, tiering and use of managed service accounts is the control to have"* unaided during
+the execution tactic, and did not reach for it here. The recurring diagnosis stands: general
+tests are derived correctly and then not applied. Retest managed service accounts explicitly at
+14/15 T1550.002 Pass the Hash.
+
+**The residual they did not reach**, which is the real design content: after a gMSA, least
+privilege in SQL, denied interactive logon, and non-writable script paths, **anyone with
+administrator or SYSTEM on that host still has the account's database access** — SYSTEM can
+retrieve the gMSA password by design. The server is the security boundary of the database.
+
+**Earlier note, kept:** the first check on this technique was cancelled at the user's request on
+2026-08-11, after being
 carried across the two format corrections. Status stays `untested`; the technique itself was
 taught twice, in full. Do not re-ask it as a standalone question — if the run-as account idea
 needs testing, fold it into a later check (T1543.003 Windows Service is the natural place, since
