@@ -296,13 +296,25 @@ sonne juste et vise le mauvais problème.
   IPs; M1032 Multi-factor Authentication as the control that *would* have stopped day one - the
   inverse of the T1078.004 Cloud Accounts case - with the boundary answer that it covers the
   first hop only, since the DC pivot ten minutes later never touches the gateway; M1021 Restrict
-  Web-Based Content named as the inapplicable one. Five-question hybrid asked, **not yet
-  answered**.
+  Web-Based Content named as the inapplicable one. Five-question hybrid asked and marked
+  2026-08-24: **`solid`**. Q1, Q3, Q4 correct unaided (boundary, inapplicable control, dual
+  tactic as a state). Q2 was **defective and the user caught it** - the stem published RDP
+  directly on the app server, then the options referred to a gateway that was never in the
+  scenario. Re-asked cleanly as 2 bis and answered correctly: MFA covers the perimeter crossing
+  only, internal domain-to-domain connections never re-evaluate it. That was the exact gap that
+  made this technique `shaky` on 2026-08-10, so it is now closed.
 - 3/16 onward not started.
 
 **The 1/16 open question was dropped**, not answered - the user moved straight to initial access.
 Its content (why "you can't defend against a bought password" does not end the argument) was
 folded into the 2/16 open question instead.
+
+**MCQ defect rule, 2026-08-24, caught by the user.** A question 2 was written whose stem
+described RDP published directly on an application server, while its options turned on a gateway
+that appeared nowhere in the stem. The user's response was *"La question est confuse."* They were
+right. **Before asking an MCQ, re-read the stem and confirm every option refers only to
+components the stem actually put in the scenario.** A defective question costs the assessment,
+not just the exchange - and it is re-asked fresh, never patched in place.
 
 **Method defect, 2026-08-24, caught by the user.** The session opened by running the
 `dfir-report-walkthrough` skill - a socratic "you map the section first" format - for three
@@ -420,7 +432,7 @@ the record and is not re-taught. **On-prem track from here:**
 | Technique | Tactic | Taught | Status |
 |---|---|---|---|
 | T1566.001 Spearphishing Attachment | initial-access | 2026-08-10 | **solid** |
-| T1133 External Remote Services | initial-access | 2026-08-10 | **shaky** |
+| T1133 External Remote Services | initial-access | 2026-08-10, re-taught 2026-08-24 | **solid** |
 | T1078.002 Domain Accounts | initial-access | 2026-08-10 | **solid** |
 | T1059.001 PowerShell | execution | 2026-08-11 | **solid** |
 | T1204.002 Malicious File | execution | 2026-08-11 | **shaky** |
@@ -616,6 +628,39 @@ does *not* apply and gets specified anyway: private endpoints and vault firewall
 is executing inside the network as the workload), encryption of contents (the vault decrypts for
 authorised callers by design), and soft-delete/purge protection (recovery controls — they
 address destruction, not disclosure).
+
+### The recurring failure: the general test is derived, then not applied (2026-08-24)
+
+**Second occurrence of the identical wrong answer.** Asked at 5 bis of T1133 External Remote
+Services to name one design decision, other than MFA, that limits what a valid domain account
+yields once the attacker is on a domain-joined Tomcat server, the answer was *"L'accès ne
+devrait pas être donné au domaine"*. On T1053.005 Scheduled Task the answer had been *"It should
+not run as domain account"*, wrong for the same reason.
+
+**The axis is produced unaided every time** - *"on doit être capable de contrôler ce que
+l'attaquant ayant ce mot de passe peut faire sur nos serveurs"* is the correct question, reached
+without scaffolding. **The mechanism named is wrong in the same way every time: the identity is
+removed instead of being bounded.** Removing domain membership does not constrain the reach of
+an identity; it deletes the identity, and with it central management, patching and central
+logging. It also answers a different question from the one asked - both scenarios asked what
+limits the account *after* the attacker is already on the host.
+
+**What was available and not reached**, all previously taught: M1026 Privileged Account
+Management as logon-right tiering (*Deny log on through Remote Desktop Services* / *Deny log on
+locally* for Tier 0 accounts on application servers, and application-server admins who are not
+Domain Admins); M1030 Network Segmentation on *outbound* initiation from the application server
+- the strongest answer here, since the report's beachhead-to-DC pivot takes ten minutes and
+presupposes only permission to connect; a gMSA scoped to its own database with interactive logon
+denied.
+
+**The residual, given twice now and still not produced back:** anyone with administrator or
+SYSTEM on the host has whatever that host's identities can reach - SYSTEM retrieves a gMSA
+password by design. The server is the security boundary of what it accesses.
+
+**Retest explicitly**, and phrase it so that "remove the domain" is not an available move: at
+**4/16 T1021.001 Remote Desktop Protocol**, where interactive logon rights are the native
+control. The T1550.002 Pass the Hash retest planned for report 1 never happened - that report
+closed at 5/15.
 
 ### On-prem track
 
