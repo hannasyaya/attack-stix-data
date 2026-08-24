@@ -98,7 +98,7 @@ Rules live in `.claude/skills/attack-tutor/SKILL.md`. Assessment questions are b
 
 ---
 
-## The route changed 2026-08-11: learning by report
+## Report 1 (closed 2026-08-24): learning by report - Cobalt Kitty
 
 The user's instruction: *"I want to learn by report and here is the first report."* The tactic
 tour is **paused, not abandoned** — it stopped after the TA0003 Persistence opener, before
@@ -194,6 +194,89 @@ one. Already found: IT ordered frequent password resets during the incident and 
 had deployed a tool that hooks the password-change function to keep up; PowerShell execution
 restrictions were in place and were bypassed with PSUnlock loading the runtime through
 rundll32; 80+ payloads recovered, **two** known to VirusTotal at the time.
+
+---
+
+## The route changed 2026-08-24: Report 2, Lynx ransomware
+
+**Cobalt Kitty is closed.** The user said *"Let's start over with this report"* on 2026-08-24.
+It stopped at 5/15 — slots 6-15 never taught, the T1218.005 Mshta check never answered. Not
+resumed. The five techniques it did deliver stay on the retention table.
+
+**Report 2: The DFIR Report, *Cat's Got Your Files: Lynx Ransomware* (published 2025-12-17).**
+Intrusion early March 2025. Analysts Friff and Daniel Casenove, reviewed by MittenSec. The user
+pasted the full report text; the site is blocked by this environment's egress proxy, so work
+from their paste, not from a fetch.
+
+**Check format settled 2026-08-24:** the hybrid — four multiple-choice plus one open — is in
+force for this report. The question from 2026-08-11 is closed.
+
+### Two structural facts that shape every lesson
+
+**ATT&CK has no Lynx object.** `chain "Lynx"` returns nothing — no group, no campaign, no
+software. The opposite of Cobalt Kitty, where eleven ATT&CK procedures trace back to the report
+itself. Consequence: section 4 is the report's own evidence, and groups from `actors` are
+unrelated adversaries used only to show whether the report's version is typical. Never blur them.
+
+**The date problem inverts.** Cobalt Kitty was 2017 and needed constant "this control exists
+now" notes. March 2025 is current — every control discussed was available to this victim and
+mostly was not deployed. What has moved is ATT&CK: the report's **"Defense Evasion"** heading is
+a tactic that no longer exists, split into TA0005 Stealth and TA0112 Defense Impairment. Say so
+when it comes up.
+
+**The shape.** Nine days, ~178 hours to ransomware. No malware until the final payload, no C2
+framework, no credential dumping, no exploit. The whole intrusion is valid credentials plus RDP
+plus a network scanner. The absence is the lesson: no execution-prevention story, no antivirus
+story, nothing for a mail gateway to do. The attacker's only concession to stealth is naming an
+account `administratr`.
+
+### Curriculum - 16 slots, in the report's own order
+
+| # | Technique | Report section | Why it earns a slot |
+|---|---|---|---|
+| 1 | T1650 Acquire Access + T1588.002 Obtain Capabilities: Tool + T1583.003 Virtual Private Server | Case Summary, C2 | Pre-compromise, one short message |
+| 2 | T1133 External Remote Services | Initial Access | **Callback + retest** - `shaky` from 2026-08-10 |
+| 3 | T1078.002 Domain Accounts | Initial Access | **Callback** - `solid`. Two accounts, neither stolen on-site |
+| 4 | T1021.001 Remote Desktop Protocol | Lateral Movement | The spine of all nine days |
+| 5 | T1046 Network Service Discovery | Discovery | Carries the segmentation argument missed three times |
+| 6 | T1136.002 Domain Account | Persistence | Three accounts via `dsa.msc`, passwords never to expire |
+| 7 | T1036.010 Masquerade Account Name | Persistence | `administratr`; a real name altered by one character |
+| 8 | T1098.007 Additional Local or Domain Groups | Privilege Escalation | Domain Admins, and Group Policy Creator Owners |
+| 9 | T1219.002 Remote Desktop Software | Persistence / C2 | AnyDesk on a DC, installed and never used |
+| 10 | T1105 Ingress Tool Transfer | Discovery, day 6 | Cashes the egress argument left open in Cobalt Kitty |
+| 11 | T1110.003 Password Spraying | Discovery, day 6 | NetExec over port 445 |
+| 12 | T1560.001 Archive via Utility | Collection | 7-Zip right-click, staged on the Desktop |
+| 13 | T1567 Exfiltration Over Web Service | Exfiltration | temp.sh. Taught at **parent** level, and why |
+| 14 | T1518.002 Backup Software Discovery | Impact | Veeam console. One recorded group in all of ATT&CK |
+| 15 | T1490 Inhibit System Recovery | Impact | Backup jobs deleted before encryption, not after |
+| 16 | T1486 Data Encrypted for Impact | Impact | `w.exe --dir E:\ --mode fast --verbose --noprint` |
+
+**Numbers are fixed at 16.** Anything else found is appended, never inserted - renumbering cost
+the user their place three times on report 1.
+
+**Named and skipped**, so the subset is not mistaken for the whole: T1059.003 Windows Command
+Shell (callback to T1059.001 PowerShell); T1016 System Network Configuration Discovery, T1082
+System Information Discovery, T1012 Query Registry, T1018 Remote System Discovery, T1057 Process
+Discovery, T1087.002 Domain Account, T1069.002 Domain Groups, T1135 Network Share Discovery,
+T1518 Software Discovery - the Discovery section is enormous and its decision content is not,
+so the pattern is taught once at slot 5; T1039 Data from Network Shared Drive - the closest
+call, folded into slot 12; T1074.001 Local Data Staging; T1078.003 Local Accounts; T1213 Data
+from Information Repositories.
+
+### Progress
+
+- **1/16 pre-compromise** - delivered 2026-08-24. T1650 Acquire Access, T1588.002 Obtain
+  Capabilities: Tool, T1583.003 Virtual Private Server. One open question, no MCQ set: the phase
+  has no design decisions to test. M1056 Pre-compromise addresses **0 techniques in scope** -
+  used as the concrete demonstration that no preventive control exists here.
+- 2/16 onward not started.
+
+**Method defect, 2026-08-24, caught by the user.** The session opened by running the
+`dfir-report-walkthrough` skill - a socratic "you map the section first" format - for three
+messages before `attack-learning/progress.md` was read. The user's correction was *"No no. You
+missed everything."* **Read the progress file before the first substantive message of any
+session**, not after a correction. The walkthrough skill and the tutor's report mode are
+different products and this repo's user has settled on the tutor.
 
 ---
 
