@@ -263,13 +263,46 @@ so the pattern is taught once at slot 5; T1039 Data from Network Shared Drive - 
 call, folded into slot 12; T1074.001 Local Data Staging; T1078.003 Local Accounts; T1213 Data
 from Information Repositories.
 
+**Langue du cours, fixée 2026-08-24.** Le cours se donne **en français**. Instruction de
+l'utilisateur : *"Le français pour tout le concours mais on peut garder les termes techniques en
+anglais pour ne pas faire une traduction à outrance."* Donc :
+
+- Corps du cours, explications, marking, questions de contrôle : **français**.
+- **Restent en anglais** : les citations MITRE verbatim (c'est la citation qu'il reprend dans ses
+  documents de conception), les noms de techniques, tactiques et mitigations, les noms de log
+  sources et d'event IDs, et le vocabulaire technique courant du métier — beachhead, logon type,
+  elevated token, gateway, MFA, segmentation, payload. Ne pas franciser à outrance.
+- Les sept intitulés de sections sont traduits : *Ce que c'est* (avec **la frontière**), *Pourquoi
+  l'adversaire le fait*, *Sur votre stack*, *Ce que l'attaquant a fait dans le rapport*, *Ce qui
+  l'arrête*, *Ce qui le révèle*, *Contrôle*.
+
+**La frontière — définition demandée deux fois le 2026-08-24, donc à énoncer clairement quand
+elle sert.** Partie qui clôt la section 1. Elle nomme les techniques voisines avec lesquelles
+celle-ci est confondue et donne, pour chacune, le seul fait qui tranche. Elle répond à *comment
+sais-je que c'est celle-ci et pas celle-là*, pas à *qu'est-ce que c'est*. Enjeu : chaque voisine
+porte un jeu de mitigations différent, donc se tromper de technique produit une exigence qui
+sonne juste et vise le mauvais problème.
+
 ### Progress
 
 - **1/16 pre-compromise** - delivered 2026-08-24. T1650 Acquire Access, T1588.002 Obtain
   Capabilities: Tool, T1583.003 Virtual Private Server. One open question, no MCQ set: the phase
   has no design decisions to test. M1056 Pre-compromise addresses **0 techniques in scope** -
   used as the concrete demonstration that no preventive control exists here.
-- 2/16 onward not started.
+- **2/16 T1133 External Remote Services** - re-taught in full (not a callback) 2026-08-24,
+  because it was `shaky` and this report rests entirely on its control-boundary gap. Delivered
+  in French. Carries two tactics, taught as a *state* not a step. Key content: logon type 3 then
+  10 as one RDP connection; the `DESKTOP-BUL6K1U` Workstation name constant across both source
+  IPs; M1032 Multi-factor Authentication as the control that *would* have stopped day one - the
+  inverse of the T1078.004 Cloud Accounts case - with the boundary answer that it covers the
+  first hop only, since the DC pivot ten minutes later never touches the gateway; M1021 Restrict
+  Web-Based Content named as the inapplicable one. Five-question hybrid asked, **not yet
+  answered**.
+- 3/16 onward not started.
+
+**The 1/16 open question was dropped**, not answered - the user moved straight to initial access.
+Its content (why "you can't defend against a bought password" does not end the argument) was
+folded into the 2/16 open question instead.
 
 **Method defect, 2026-08-24, caught by the user.** The session opened by running the
 `dfir-report-walkthrough` skill - a socratic "you map the section first" format - for three
