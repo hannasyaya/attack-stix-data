@@ -320,7 +320,18 @@ sonne juste et vise le mauvais problème.
   mitigations that bites when the credential was bought (Q3), and the domain admin account as a
   *reach multiplier* that turns a netscan into the day-9 encryption target list on day 1 (Q4,
   after the vocabulary was fixed). Two missed - see the two findings below.
-- 4/16 onward not started. **Carries two retests**: the identity-scoping failure, and the
+- **4/16 T1021.001 Remote Desktop Protocol** - taught 2026-08-24, **`shaky`**. Four MCQ answered
+  correctly but they carried the longest-option tell, so they are not evidence. On the open
+  question the user reached **GPO logon-right groups unaided** - the first time in this session
+  the bounding mechanism was produced rather than "remove the domain", which closes the first
+  retest. Two misses: the question was about a **flow** rule and was answered with an identity
+  control, so the network team still has no rule and a compromised support technician's account
+  satisfies the GPO completely; and the explicitly requested residual half was not attempted.
+  The teaching answer is to split the flow rule **by destination class** - workstation to
+  workstation allowed (that is the entire support use case), workstation to server denied,
+  server to server denied except from the defined administration path - which dissolves the
+  objection, with the GPO layered on top rather than instead.
+- 5/16 onward not started. **Carries one retest**: the identity-scoping failure, and the
   detection cost of Tier 0 logon practice. T1021.001 Remote Desktop Protocol is the right place
   for both because logon rights are its native control.
 
@@ -461,6 +472,7 @@ the record and is not re-taught. **On-prem track from here:**
 | T1053.005 Scheduled Task | persistence | 2026-08-11 | **shaky** |
 | T1059.005 Visual Basic | execution | 2026-08-11 | untested |
 | T1218.005 Mshta | stealth | 2026-08-11 | untested |
+| T1021.001 Remote Desktop Protocol | lateral-movement | 2026-08-24 | **shaky** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -647,6 +659,22 @@ does *not* apply and gets specified anyway: private endpoints and vault firewall
 is executing inside the network as the workload), encryption of contents (the vault decrypts for
 authorised callers by design), and soft-delete/purge protection (recovery controls — they
 address destruction, not disclosure).
+
+### The second half of a two-part question is not attempted (2026-08-24)
+
+Twice now, an open question asking for two named things has come back with one.
+
+- **3/16 Q5** said *"nommez le coût côté détection, pas seulement côté prévention"*. Only the
+  prevention half came.
+- **4/16** said *"nommez ce que votre découpage ne couvre plus"*. Only the découpage came.
+
+**The content produced is sound in both cases; it is the reading of the instruction that drops
+out.** Distinct from the identity-scoping failure, which was a wrong mechanism - here the
+mechanism is right and a requested part is simply absent.
+
+Two consequences. When marking, say plainly which half is missing rather than treating the
+answer as partially correct overall. And when writing a two-part check, put the second part on
+its own line rather than trailing it after a dash - the trailing clause is what goes unread.
 
 ### A check must not be answerable from the message that contains it (2026-08-24)
 
