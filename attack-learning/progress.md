@@ -648,6 +648,23 @@ is executing inside the network as the workload), encryption of contents (the va
 authorised callers by design), and soft-delete/purge protection (recovery controls — they
 address destruction, not disclosure).
 
+### A check must not be answerable from the message that contains it (2026-08-24)
+
+*"Pourquoi la suggestion du prompt me propose deja la reponse. C'est embetant en mode
+apprentissage."* The client's suggested-reply feature was handing the user the answer. That
+feature is not controllable from here, but **half the cause is mine**: those suggestions are
+generated from my own message, so when section 5 explains what stops the technique and section 7
+then asks what stops the technique, the answer is sitting in the same message and any suggestion
+engine will lift it.
+
+**Rule: the check question must not be answerable by re-reading the message it closes.** It has
+to require *applying* the content to a situation not covered above - a constraint not addressed,
+a colleague's objection, a trade-off between two mitigations that were never compared. If the
+answer can be found by scrolling up, the question tests nothing, screen suggestion or not.
+
+Also avoid putting the check in the same message as a long recap of the very material it tests;
+proximity helps even when the wording does not.
+
 ### The MCQ instrument was broken: longest option = correct answer (2026-08-24, caught by the user)
 
 *"Les qcm sont mal élaborés. Il suffit de voir la reponse la plus longue qui correspond à la
