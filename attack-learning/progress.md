@@ -440,7 +440,7 @@ the record and is not re-taught. **On-prem track from here:**
 | Technique | Tactic | Taught | Status |
 |---|---|---|---|
 | T1566.001 Spearphishing Attachment | initial-access | 2026-08-10 | **solid** |
-| T1133 External Remote Services | initial-access | 2026-08-10, re-taught 2026-08-24 | **solid** |
+| T1133 External Remote Services | initial-access | 2026-08-10, re-taught 2026-08-24 | **shaky** |
 | T1078.002 Domain Accounts | initial-access | 2026-08-10, callback 2026-08-24 | **shaky** |
 | T1059.001 PowerShell | execution | 2026-08-11 | **solid** |
 | T1204.002 Malicious File | execution | 2026-08-11 | **shaky** |
@@ -636,6 +636,40 @@ does *not* apply and gets specified anyway: private endpoints and vault firewall
 is executing inside the network as the workload), encryption of contents (the vault decrypts for
 authorised callers by design), and soft-delete/purge protection (recovery controls — they
 address destruction, not disclosure).
+
+### The MCQ instrument was broken: longest option = correct answer (2026-08-24, caught by the user)
+
+*"Les qcm sont mal élaborés. Il suffit de voir la reponse la plus longue qui correspond à la
+reponse exacte. J'ai répondu presque à l'aveugle."* Audited across every MCQ asked in this
+report: **the correct option is the longest in 11 of 12 questions.** The one exception is Q1 of
+2/16.
+
+**Root cause, and it is a method fault rather than luck.** The correct option was being written
+as a piece of teaching - it carried the reasoning, the nuance, the "because" - while the
+distractors were bare assertions. The shape gave the answer away, so the instrument measured
+word-counting.
+
+**Rule from here.** Options homogeneous in length, roughly within 10% of each other. Every
+distractor carries reasoning too, drawn from real ATT&CK content - a plausible adjacent
+technique, a real mitigation that does not apply here. No obviously absurd option (a "netscan is
+malware, block it with antivirus" filler appeared at 4/16). And decisively: **the correct answer
+teaches nothing** - teaching belongs in the marking reply, never in the option to tick. Check
+before sending: re-read the four options with correctness forgotten, and confirm none can be
+picked by shape.
+
+**What this invalidates.** T1133 External Remote Services had been promoted to `solid` on the
+strength of question 2 bis, an MCQ carrying the tell - **reverted to `shaky`**. The claim written
+in the 4/16 marking that "boundary discrimination is acquired across the four axes tested" is
+withdrawn: not disproven, but unfounded, which is worse for the learner. T1078.002 Domain
+Accounts stays `shaky` on its own merits - what it missed was missed on the **open** question.
+
+**What does count as evidence in this session**, because it is free production rather than
+selection: the 2/16 open answer reaching the right axis unaided (bound what the credential can
+reach), and the unprompted question about the created accounts being Domain Admins, which
+corrected a real error in my tiering reasoning. No MCQ would have surfaced either.
+
+**Standing consequence:** weight status decisions on the open question and on free exchanges.
+An MCQ set alone is not sufficient to move a technique to `solid`.
 
 ### Tiering assumes the attacker is not already Tier 0 (2026-08-24, correction caught by the user)
 
