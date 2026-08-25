@@ -637,6 +637,43 @@ is executing inside the network as the workload), encryption of contents (the va
 authorised callers by design), and soft-delete/purge protection (recovery controls — they
 address destruction, not disclosure).
 
+### Tiering assumes the attacker is not already Tier 0 (2026-08-24, correction caught by the user)
+
+**A wrong claim was made and the user caught it.** Explaining logon rights during 4/16, I listed
+"days 2, 8 and 9" as what *Deny log on locally* / *Deny log on through Remote Desktop Services*
+would have blocked in this report. The user asked: *"Les comptes qu'il a créé ne sont ils pas
+administrateur de domaine?"* They are - the report puts `administratr` and `Lookalike 1` in
+**Domain Admins**, and day 2 is those accounts logging on to hypervisors, i.e. Tier 0 accounts
+on Tier 0 machines. Tiering permits that by construction.
+
+**Corrected, hop by hop.** Of every pivot in the intrusion, logon-right tiering blocks exactly
+one: the day-9 RDP sessions to the **file servers**, Tier 1 machines reached with a Tier 0
+account. Day 1 to the DC, day 2 to the hypervisors, day 8 to DCs and hypervisors, day 9 to the
+backup servers - all Tier 0 accounts to Tier 0 machines, all inside the rule.
+
+**The structural lesson the question exposed, worth more than the correction.** Tiering assumes
+the adversary is not already in Tier 0. This one arrives holding a bought domain admin
+credential, so he never crosses the boundary - he starts inside it. Then on day 1 he *settles*
+there, creating his own Domain Admins members so he no longer depends on the purchased one.
+That is why the report contains no privilege escalation in the technical sense: no exploit, no
+token theft, no credential dumping. Its Privilege Escalation section is group additions only,
+because there was nothing to escalate.
+
+**Consequence to teach at 8/16 T1098.007 Additional Local or Domain Groups:** a control that
+sorts identities by level is worth exactly what the control on *entry into the top level* is
+worth. The questions become how many accounts hold Domain Admins, who may add one, and whether
+that addition alerts. Group membership addition is logged natively - `WinEventLog:Security` EID
+4728 (global group) and 4732 (local group) - one of the few events in this report that is free,
+rare in normal operation, and decisive.
+
+For day 1, before he made himself a domain admin, the control that bites is still segmentation
+on **outbound initiation** from the beachhead - the only one on the list that does not depend on
+which identity is used.
+
+**Process note:** this is the second substantive catch by the user in one session (after the
+defective MCQ). Both came from checking a claim against the report's own text. Do that before
+asserting what a control would have blocked - walk it hop by hop, not by category.
+
 ### Forensic density is evidence that the telemetry existed (2026-08-24, from T1078.002)
 
 Q1 asked what to conclude from the report finding no credential access activity in nine days.
