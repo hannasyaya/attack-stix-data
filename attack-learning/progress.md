@@ -303,7 +303,15 @@ sonne juste et vise le mauvais problème.
   scenario. Re-asked cleanly as 2 bis and answered correctly: MFA covers the perimeter crossing
   only, internal domain-to-domain connections never re-evaluate it. That was the exact gap that
   made this technique `shaky` on 2026-08-10, so it is now closed.
-- 3/16 onward not started.
+- **3/16 T1078.002 Domain Accounts** - callback slot delivered 2026-08-24, **`shaky`** (was
+  `solid`). Three of five correct: the four-tactic technique read as a *state* not a step (Q2),
+  M1032 Multi-factor Authentication as the only one of the three credential-obtaining
+  mitigations that bites when the credential was bought (Q3), and the domain admin account as a
+  *reach multiplier* that turns a netscan into the day-9 encryption target list on day 1 (Q4,
+  after the vocabulary was fixed). Two missed - see the two findings below.
+- 4/16 onward not started. **Carries two retests**: the identity-scoping failure, and the
+  detection cost of Tier 0 logon practice. T1021.001 Remote Desktop Protocol is the right place
+  for both because logon rights are its native control.
 
 **The 1/16 open question was dropped**, not answered - the user moved straight to initial access.
 Its content (why "you can't defend against a bought password" does not end the argument) was
@@ -433,7 +441,7 @@ the record and is not re-taught. **On-prem track from here:**
 |---|---|---|---|
 | T1566.001 Spearphishing Attachment | initial-access | 2026-08-10 | **solid** |
 | T1133 External Remote Services | initial-access | 2026-08-10, re-taught 2026-08-24 | **solid** |
-| T1078.002 Domain Accounts | initial-access | 2026-08-10 | **solid** |
+| T1078.002 Domain Accounts | initial-access | 2026-08-10, callback 2026-08-24 | **shaky** |
 | T1059.001 PowerShell | execution | 2026-08-11 | **solid** |
 | T1204.002 Malicious File | execution | 2026-08-11 | **shaky** |
 | T1047 Windows Management Instrumentation | execution | 2026-08-11 | **solid** |
@@ -628,6 +636,52 @@ does *not* apply and gets specified anyway: private endpoints and vault firewall
 is executing inside the network as the workload), encryption of contents (the vault decrypts for
 authorised callers by design), and soft-delete/purge protection (recovery controls — they
 address destruction, not disclosure).
+
+### Forensic density is evidence that the telemetry existed (2026-08-24, from T1078.002)
+
+Q1 asked what to conclude from the report finding no credential access activity in nine days.
+Answer: *"La télémétrie manquait pour observer un dump de credentials."* Wrong, and the report
+refutes it by its own evidence density - Sysmon EID 3 network connections, EID 11 `delete.me`
+file creations on remote shares, Security EID 5145 share access, EID 4688 command lines, and
+reconstructed images from the **RDP bitmap cache**. An environment instrumented to that level
+does not miss LSASS access.
+
+**The transferable principle:** a report that reconstructs an intrusion in forensic detail is
+*proving* the telemetry existed, so its stated absences are observed absences, not blind spots.
+Distinguishing *"we saw nothing"* from *"there was nothing"* is what separates reading a report
+from paraphrasing it. This is the move that licenses the report's own conclusion - the domain
+admin credentials were held before the intrusion.
+
+### Prevention was given where detection was asked for (2026-08-24, from T1078.002)
+
+Q5 asked what it costs when sysadmins RDP to an application server with Domain Admins accounts,
+and said in the stem to name **the detection cost, not only the prevention cost**. The answer
+covered lateral movement only - the prevention half, correctly, and nothing else.
+
+**The content that was missed had been taught in section 6 of the same message.** If Domain
+Admins logons to that server are routine, the attacker's 4624 is indistinguishable from yours:
+there is no baseline left to violate and no tool restores it, because the information is not in
+the log. The inverse is the design lesson - **restricting where Tier 0 accounts may log on
+manufactures detectability**. Once the rule exists, any Domain Admin logon on a Tier 1 server is
+an anomaly by construction, and a single event becomes an alert instead of noise you created
+yourself. A preventive control that produces signal by existing, with no product purchase.
+
+Related to but distinct from the identity-scoping failure below: there the mechanism was wrong,
+here the requested half of the question was not attempted.
+
+### Vocabulary defect, 2026-08-24 - French edition of the "click-time" failure
+
+Question 4 could not be answered because of one word: *"que signifie inscriptible"*. The word
+was my own French rendering of "writable" and it blocked the question, exactly as "click-time
+URL rewriting" did on 2026-08-11. **In French, prefer plain phrasing over a clever equivalent:
+"accessible en écriture", not "inscriptible".** The rule against unglossed terms already existed
+and was broken again in a new language. Re-asked as 4 bis after glossing, and answered correctly
+- the term was the obstacle, not the idea.
+
+Gloss that worked, kept for reuse: netscan tests write access by dropping a file named
+`delete[.]me` on each discovered share and deleting it (Sysmon EID 11, Security EID 5145). With
+domain admin rights the test succeeds everywhere. **A readable share gets stolen; a writable
+share gets encrypted.**
 
 ### The recurring failure: the general test is derived, then not applied (2026-08-24)
 
