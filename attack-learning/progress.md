@@ -208,8 +208,19 @@ Intrusion early March 2025. Analysts Friff and Daniel Casenove, reviewed by Mitt
 pasted the full report text; the site is blocked by this environment's egress proxy, so work
 from their paste, not from a fetch.
 
-**Check format settled 2026-08-24:** the hybrid — four multiple-choice plus one open — is in
-force for this report. The question from 2026-08-11 is closed.
+**Check format, settled 2026-08-24 and then changed the same day.** The hybrid (four MCQ plus
+one open) ran for slots 2, 3 and 4 and was withdrawn once the MCQ instrument was found broken -
+see the finding below. The user's instruction: *"On repasse a une question ouverte, forme
+initiale. On fait les qcm a la fin du rapport."* So:
+
+- **Section 7 of every technique: one open question**, the original format. It tests production,
+  which is the architect's actual output, and it is the only instrument that has produced
+  reliable signal in this session.
+- **End of report: one cumulative MCQ set**, built under the corrected distractor rule. Hand it
+  to the `attack-examiner` agent - it exists for exactly this in the repo and does not carry the
+  habit of teaching inside the correct option. Offer it when the report closes.
+
+The 2026-08-11 question about MCQ format is closed by this.
 
 ### Two structural facts that shape every lesson
 
