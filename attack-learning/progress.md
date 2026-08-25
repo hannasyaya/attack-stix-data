@@ -331,7 +331,18 @@ sonne juste et vise le mauvais problème.
   workstation allowed (that is the entire support use case), workstation to server denied,
   server to server denied except from the defined administration path - which dissolves the
   objection, with the GPO layered on top rather than instead.
-- 5/16 onward not started. **Carries one retest**: the identity-scoping failure, and the
+- **5/16 T1046 Network Service Discovery** - taught 2026-08-24, **`shaky`**. First slot under
+  the new format (one open question, no MCQ) and **both halves of the two-part question were
+  attempted** - the previous finding does not repeat. On (a), one of three elements landed: the
+  dedicated non-human service account, correctly justified as making identity a discriminator.
+  On (b), the core is right - the attacker gains reach to every server - but the two sharper
+  consequences were missed: he inherits the **alibi** (scanning from that host is expected
+  behaviour by policy) and the **finished inventory**, which in this report cost the attacker
+  four separate scanning sessions to rebuild. Teaching answer for (a): a legitimate scan is
+  distinguishable because it is *predictable*, pinned on window, source address, declared
+  destination/port set and identity - each pin is a free detection rule. Design consequence: an
+  inventory server is a Tier 0 asset nobody classifies as one.
+- 6/16 onward not started. **Carries one retest**: the identity-scoping failure, and the
   detection cost of Tier 0 logon practice. T1021.001 Remote Desktop Protocol is the right place
   for both because logon rights are its native control.
 
@@ -473,6 +484,7 @@ the record and is not re-taught. **On-prem track from here:**
 | T1059.005 Visual Basic | execution | 2026-08-11 | untested |
 | T1218.005 Mshta | stealth | 2026-08-11 | untested |
 | T1021.001 Remote Desktop Protocol | lateral-movement | 2026-08-24 | **shaky** |
+| T1046 Network Service Discovery | discovery | 2026-08-24 | **shaky** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -659,6 +671,32 @@ does *not* apply and gets specified anyway: private endpoints and vault firewall
 is executing inside the network as the workload), encryption of contents (the vault decrypts for
 authorised callers by design), and soft-delete/purge protection (recovery controls — they
 address destruction, not disclosure).
+
+### THE unifying diagnosis: the control is placed inside the boundary it must enforce (2026-08-24)
+
+Four occurrences now, across both tracks, and they are the same move:
+
+- **T1078.004 Cloud Accounts** - MFA imagined to cover a non-interactive workload identity.
+- **T1552.001 Credentials In Files** - a managed identity imagined to restrict access from the
+  application's own execution context.
+- **T1053.005 Scheduled Task and T1133 External Remote Services** - "remove the account from the
+  domain", i.e. delete the identity rather than bound it.
+- **T1046 Network Service Discovery** - the scanning server *logs its own activity so the IPS
+  can judge whether the scan is legitimate*, i.e. the audited tool certifies itself. (The
+  plumbing is also wrong - an IPS reads traffic, not the scanned host's application log - but
+  the plumbing is the smaller error.)
+
+**The axis is reached unaided every single time.** What fails is mechanism selection, and it
+fails in one consistent direction: the chosen control depends on trusting the very thing it is
+supposed to constrain.
+
+**The correcting question, to put to the user by name from here on: *qui doit être digne de
+confiance pour que ce contrôle tienne ?*** If the answer includes the thing being controlled,
+the control does not exist. This supersedes the narrower "identity scoping" framing recorded
+below - that was one instance of this, not the pattern itself.
+
+This is also the same shape as the telemetry question *can the party being audited disable the
+audit?*, which gives a ready bridge when teaching it.
 
 ### The second half of a two-part question is not attempted (2026-08-24)
 
