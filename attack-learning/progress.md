@@ -344,17 +344,33 @@ sonne juste et vise le mauvais problème.
   inventory server is a Tier 0 asset nobody classifies as one.
 - **6/16 T1136.002 Domain Account** - taught 2026-08-24, **`shaky`**. Part (a) answered; **(b)
   was never tested because I marked before the user had finished** - see the corrected finding
-  below. The `shaky` stands on (a) alone: the decisive condition, that the delegated right must
-  cover creation but **not** group membership, was absent, and that is the report's own sequence.
-  On (a): OU-scoped delegation is right and is the main condition; and *"les
+  below. Marked **`solid`** after the user pushed back on the group-membership point: they had
+  meant the bounded privilege to include what the created account can be granted. Taken at their
+  word, and the reason is stated - bounding a privilege rather than removing a capability is the
+  mechanism they produced unaided at 4/16, so the clarification is consistent with demonstrated
+  reasoning rather than a retrofit. On (a): OU-scoped delegation is right and is the main condition; and *"les
   journaux... non accessible par ceux qui créent les comptes"* is **the first time the "who must
   be trusted for this control to hold" reasoning was produced by the user**. Credit precisely -
   forwarding logs off the DC was in my own message, but restricting *read* access from the
   delegated team was not. Missed: the delegated right must exclude **group membership** (creating
   in your OU is bounded, adding to a group is not - and that is the report's own sequence), the
   declared account shape, the pipeline's own identity as a new account-creation authority, and
-  reconciliation against declared pipeline runs. The first of those is the one that decides the
-  status.
+  reconciliation against declared pipeline runs.
+
+  **AD mechanics worth reusing, from the pushback exchange.** Creation and membership are two
+  ACEs on two different objects: *create user objects* sits on the **OU**, *write the `member`
+  attribute* sits on the **group object**. So OU delegation genuinely does not grant Domain
+  Admins - the user was right about that. But it does not bound membership either, and there are
+  two concrete leaks: application groups living **inside** the delegated OU are covered by the
+  delegation, so membership is delegated without being written down; and if any of those groups
+  is itself nested in a privileged group elsewhere, adding a member confers the outer group's
+  rights transitively while the OU boundary stays intact. **Nesting is the leak and it is
+  invisible in the delegation diagram.**
+
+  **The requirement-writing lesson:** "delegation limited to the application OU" will be
+  implemented by the directory team as a user-object creation ACE on that OU and nothing else.
+  What is not named is not implemented. The durable wording names both ACEs and forbids groups in
+  the delegated OU from being members of any group outside it.
   Teaching content worth keeping: **ATT&CK's analytic DET0003/AN0006 requires step (1) a
   suspicious process such as `net user /add /domain`, then (2) Event ID 4720.** The attacker used
   `mmc.exe` with `dsa.msc`, so step (1) never fires while 4720 fires identically - analytics
@@ -505,7 +521,7 @@ the record and is not re-taught. **On-prem track from here:**
 | T1218.005 Mshta | stealth | 2026-08-11 | untested |
 | T1021.001 Remote Desktop Protocol | lateral-movement | 2026-08-24 | **shaky** |
 | T1046 Network Service Discovery | discovery | 2026-08-24 | **shaky** |
-| T1136.002 Domain Account | persistence | 2026-08-24 | **shaky** |
+| T1136.002 Domain Account | persistence | 2026-08-24 | **solid** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
