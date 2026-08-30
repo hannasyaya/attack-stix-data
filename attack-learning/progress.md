@@ -342,15 +342,19 @@ sonne juste et vise le mauvais problème.
   distinguishable because it is *predictable*, pinned on window, source address, declared
   destination/port set and identity - each pin is a free detection rule. Design consequence: an
   inventory server is a Tier 0 asset nobody classifies as one.
-- **6/16 T1136.002 Domain Account** - taught 2026-08-24, **`shaky`**. Part (a) answered, part
-  (b) not attempted. On (a): OU-scoped delegation is right and is the main condition; and *"les
+- **6/16 T1136.002 Domain Account** - taught 2026-08-24, **`shaky`**. Part (a) answered; **(b)
+  was never tested because I marked before the user had finished** - see the corrected finding
+  below. The `shaky` stands on (a) alone: the decisive condition, that the delegated right must
+  cover creation but **not** group membership, was absent, and that is the report's own sequence.
+  On (a): OU-scoped delegation is right and is the main condition; and *"les
   journaux... non accessible par ceux qui créent les comptes"* is **the first time the "who must
   be trusted for this control to hold" reasoning was produced by the user**. Credit precisely -
   forwarding logs off the DC was in my own message, but restricting *read* access from the
   delegated team was not. Missed: the delegated right must exclude **group membership** (creating
   in your OU is bounded, adding to a group is not - and that is the report's own sequence), the
   declared account shape, the pipeline's own identity as a new account-creation authority, and
-  reconciliation against declared pipeline runs.
+  reconciliation against declared pipeline runs. The first of those is the one that decides the
+  status.
   Teaching content worth keeping: **ATT&CK's analytic DET0003/AN0006 requires step (1) a
   suspicious process such as `net user /add /domain`, then (2) Event ID 4720.** The attacker used
   `mmc.exe` with `dsa.msc`, so step (1) never fires while 4720 fires identically - analytics
@@ -715,7 +719,7 @@ below - that was one instance of this, not the pattern itself.
 This is also the same shape as the telemetry question *can the party being audited disable the
 audit?*, which gives a ready bridge when teaching it.
 
-### The second half of a two-part question is not attempted (2026-08-24)
+### Do not mark before the user has finished answering (2026-08-24, corrected by the user)
 
 Twice now, an open question asking for two named things has come back with one.
 
@@ -727,13 +731,19 @@ Twice now, an open question asking for two named things has come back with one.
 out.** Distinct from the identity-scoping failure, which was a wrong mechanism - here the
 mechanism is right and a requested part is simply absent.
 
-**Third occurrence 2026-08-24 at 6/16**, where (b) carried the entire design content and was
-not attempted. Formatting is not the fix: 5/16 and 6/16 both put the two parts on separate
-labelled lines, and 5/16 worked while 6/16 did not.
+**This finding was largely wrong and the user corrected it**: *"J'allais repondre à la deuxième
+après la première mais bon."* They answer in successive short messages, and I treated the end of
+a message as the end of the answer, then marked a half as missing when it had simply not been
+sent yet. The 3/16 and 4/16 instances are suspect for the same reason and should not be treated
+as a demonstrated reading failure.
 
-**Mechanism changed 2026-08-24: one question per message.** If a second angle matters, ask it
-after the first is marked. When marking, say plainly which half is missing rather than treating
-the answer as partially correct overall.
+**Rule: wait for the user to finish before marking.** If an answer looks partial, ask whether
+they are done rather than scoring it.
+
+**Format settled 2026-08-24, on the user's call: one open question per technique, full stop.**
+Their reasoning, which is correct: the same techniques recur across reports, so drilling a second
+angle on one slot costs more than it returns - the second angle arrives on its own with the next
+victim and the next architecture.
 
 ### A check must not be answerable from the message that contains it (2026-08-24)
 
