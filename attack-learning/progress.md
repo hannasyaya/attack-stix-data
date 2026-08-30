@@ -342,7 +342,23 @@ sonne juste et vise le mauvais problème.
   distinguishable because it is *predictable*, pinned on window, source address, declared
   destination/port set and identity - each pin is a free detection rule. Design consequence: an
   inventory server is a Tier 0 asset nobody classifies as one.
-- 6/16 onward not started. **Carries one retest**: the identity-scoping failure, and the
+- **6/16 T1136.002 Domain Account** - taught 2026-08-24, **`shaky`**. Part (a) answered, part
+  (b) not attempted. On (a): OU-scoped delegation is right and is the main condition; and *"les
+  journaux... non accessible par ceux qui créent les comptes"* is **the first time the "who must
+  be trusted for this control to hold" reasoning was produced by the user**. Credit precisely -
+  forwarding logs off the DC was in my own message, but restricting *read* access from the
+  delegated team was not. Missed: the delegated right must exclude **group membership** (creating
+  in your OU is bounded, adding to a group is not - and that is the report's own sequence), the
+  declared account shape, the pipeline's own identity as a new account-creation authority, and
+  reconciliation against declared pipeline runs.
+  Teaching content worth keeping: **ATT&CK's analytic DET0003/AN0006 requires step (1) a
+  suspicious process such as `net user /add /domain`, then (2) Event ID 4720.** The attacker used
+  `mmc.exe` with `dsa.msc`, so step (1) never fires while 4720 fires identically - analytics
+  encode assumed tradecraft, not the technique. Specify the **state event**, never the route to
+  it. And the answer to (b): accepting the delegation makes 4720 stop being rare, converting the
+  report's best free signal into noise; the anomaly must be rebuilt as "an account no pipeline
+  run claims".
+- 7/16 onward not started. **Carries one retest**: the identity-scoping failure, and the
   detection cost of Tier 0 logon practice. T1021.001 Remote Desktop Protocol is the right place
   for both because logon rights are its native control.
 
@@ -485,6 +501,7 @@ the record and is not re-taught. **On-prem track from here:**
 | T1218.005 Mshta | stealth | 2026-08-11 | untested |
 | T1021.001 Remote Desktop Protocol | lateral-movement | 2026-08-24 | **shaky** |
 | T1046 Network Service Discovery | discovery | 2026-08-24 | **shaky** |
+| T1136.002 Domain Account | persistence | 2026-08-24 | **shaky** |
 
 **T1078.004** — the boundary against T1528 and T1550 landed; **mitigation applicability did
 not.** The check asked what MFA and Conditional Access buy you when a partner's CI/CD service
@@ -710,9 +727,13 @@ Twice now, an open question asking for two named things has come back with one.
 out.** Distinct from the identity-scoping failure, which was a wrong mechanism - here the
 mechanism is right and a requested part is simply absent.
 
-Two consequences. When marking, say plainly which half is missing rather than treating the
-answer as partially correct overall. And when writing a two-part check, put the second part on
-its own line rather than trailing it after a dash - the trailing clause is what goes unread.
+**Third occurrence 2026-08-24 at 6/16**, where (b) carried the entire design content and was
+not attempted. Formatting is not the fix: 5/16 and 6/16 both put the two parts on separate
+labelled lines, and 5/16 worked while 6/16 did not.
+
+**Mechanism changed 2026-08-24: one question per message.** If a second angle matters, ask it
+after the first is marked. When marking, say plainly which half is missing rather than treating
+the answer as partially correct overall.
 
 ### A check must not be answerable from the message that contains it (2026-08-24)
 
